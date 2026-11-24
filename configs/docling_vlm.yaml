@@ -1,0 +1,12 @@
+name: docling_vlm
+input:
+  directory: storage
+  manifest: data/sample.txt
+output: outputs/docling_vlm
+triage:
+  classifiers: [rules, repetition]
+parser:
+  name: docling-vlm
+  options:
+    device: cuda:3
+    model: GRANITEDOCLING_TRANSFORMERS

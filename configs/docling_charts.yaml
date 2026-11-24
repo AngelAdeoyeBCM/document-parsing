@@ -1,0 +1,16 @@
+name: docling_charts
+input:
+  directory: storage
+  manifest: data/sample.txt
+output: outputs/docling_charts
+triage:
+  classifiers: [rules, repetition]
+parser:
+  name: docling
+  options:
+    device: cuda:2
+    heading_hierarchy: true
+    classify_pictures: true
+    extract_charts: true
+    # describe_url: http://localhost:8000/v1/chat/completions
+    # describe_model: Qwen/Qwen2.5-VL-7B-Instruct

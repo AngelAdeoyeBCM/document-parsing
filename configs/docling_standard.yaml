@@ -1,0 +1,32 @@
+name: docling_standard
+input:
+  directory: storage
+  manifest: data/sample.txt
+output: outputs/docling_standard
+triage:
+  policy: tail  # skip one block ending at the last page; 'flagged' skips every flagged page
+  keep_first: 1
+  classifiers:
+    - name: rules
+      options: {min_hits: 3}
+    - name: repetition
+      options: {min_documents: 20, min_share: 0.6}
+parser:
+  name: docling
+  options:
+    device: cuda:1
+    layout_model: layout_egret_xlarge
+    do_ocr: false
+    table_mode: accurate
+    cell_matching: true
+    heading_hierarchy: true
+    classify_pictures: true
+routes:
+  - name: image_only  # e.g. State Street jsPDF exports: pages are pictures, so OCR them
+    max_chars_per_page: 50
+    options: {do_ocr: true, ocr_engine: rapidocr, rapidocr_backend: torch}
+postprocess:
+  - chart_filter  # drop every picture not classified as a chart (logos, icons, photos)
+renderers:
+  - json
+  - proof

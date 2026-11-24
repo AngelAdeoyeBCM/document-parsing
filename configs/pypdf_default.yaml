@@ -1,0 +1,7 @@
+name: pypdf_default
+input:
+  directory: storage
+  manifest: data/sample.txt
+output: outputs/pypdf_default
+parser:
+  name: pypdf

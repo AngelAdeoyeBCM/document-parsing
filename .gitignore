@@ -1,0 +1,11 @@
+.venv/
+.venv-nemotron/
+models/
+__pycache__/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+data/
+outputs/
+storage/
+*.7z
