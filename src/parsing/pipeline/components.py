@@ -1,34 +1,24 @@
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping
 from typing import Any
+
+from inventory import Triage
 
 from ..postprocess import ChartFilter, DocumentProcessor
 from ..render import JsonRenderer, MarkdownRenderer, ProofRenderer, Renderer
-from ..triage import (
-    CompositeClassifier,
-    FlaggedPolicy,
-    PageClassifier,
-    RepetitionClassifier,
-    RuleClassifier,
-    SkipPolicy,
-    TailPolicy,
-)
-from .config import ComponentSpec
+from .config import ComponentSpec, TriageSpec
 
-CLASSIFIERS: Mapping[str, type[PageClassifier]] = {'rules': RuleClassifier, 'repetition': RepetitionClassifier}
-POLICIES: Mapping[str, type[SkipPolicy]] = {'tail': TailPolicy, 'flagged': FlaggedPolicy}
 PROCESSORS: Mapping[str, type[DocumentProcessor]] = {'chart_filter': ChartFilter}
 RENDERERS: Mapping[str, type[Renderer]] = {'json': JsonRenderer, 'markdown': MarkdownRenderer, 'proof': ProofRenderer}
 
 
-def build_classifier(specs: Sequence[ComponentSpec]) -> PageClassifier:
-    classifiers = [_build(CLASSIFIERS, spec) for spec in specs]
-    return classifiers[0] if len(classifiers) == 1 else CompositeClassifier(classifiers)
-
-
-def build_policy(name: str, keep_first: int) -> SkipPolicy:
-    return _build(POLICIES, ComponentSpec(name, {'keep_first': keep_first}))
+def build_triage(spec: TriageSpec) -> Triage:
+    return Triage(
+        classifiers=tuple((classifier.name, dict(classifier.options)) for classifier in spec.classifiers),
+        policy=spec.policy,
+        keep_first=spec.keep_first,
+    )
 
 
 def build_renderer(spec: ComponentSpec) -> Renderer:

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from parsing.triage import (
+from inventory.triage import (
     CompositeClassifier,
     FlaggedPolicy,
     PageVerdict,

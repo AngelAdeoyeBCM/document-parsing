@@ -1,11 +1,16 @@
 from __future__ import annotations
 
 import hashlib
+import logging
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
 
-from .profiler import PageProfile, PDFProfile, Profiler
+from .profiler import PROFILER_VERSION, PageProfile, PDFProfile, Profiler
 from .store import InventoryStore
+from .triage import Triage, run_triage
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True, slots=True)
@@ -17,11 +22,9 @@ class PdfSource:
     metadata: dict[str, str]
 
     @classmethod
-    def from_path(cls, path: Path | str, **metadata: str) -> 'PdfSource':
+    def from_path(cls, path: Path | str, **metadata: str) -> PdfSource:
         path = Path(path)
-        with path.open('rb') as handle:
-            hash_id = hashlib.file_digest(handle, 'sha256').hexdigest()
-        return cls(path=path, hash_id=hash_id, metadata=dict(metadata))
+        return cls(path=path, hash_id=file_hash(path), metadata=dict(metadata))
 
     @property
     def doc_id(self) -> str:
@@ -33,17 +36,25 @@ class PdfSource:
 
 
 @dataclass(frozen=True, slots=True)
-class DocumentProfile:
-    profile: PDFProfile
-    text_quality: str
-    do_ocr: bool
-    sparse_pages: int
-    blank_pages: int
-    pages_profile: tuple[PageProfile, ...]
+class BuildReport:
+    profiled: int = 0  # read with pypdf in this build
+    cached: int = 0  # content already profiled by this profiler version; pypdf not called
+    failed: int = 0  # pypdf could not read it; recorded in profile_errors
+    missing: int = 0  # listed in the manifest but not on disk
+    triaged: int = 0  # documents given new triage verdicts
+
+    @property
+    def documents(self) -> int:
+        return self.profiled + self.cached
+
+
+def file_hash(path: Path) -> str:
+    with path.open('rb') as handle:
+        return hashlib.file_digest(handle, 'sha256').hexdigest()
 
 
 class Inventory:
-    """Discover, cheaply profile, persist, and select PDFs from a directory."""
+    """Discover PDFs, profile each unique file once with pypdf, persist profiles, text and triage, and select."""
 
     def __init__(
         self,
@@ -51,169 +62,108 @@ class Inventory:
         database: Path | str,
         *,
         sparse_chars: int = 50,
+        scan_coverage: float = 0.5,
+        ocr_share: float = 0.5,
     ) -> None:
         self.directory = Path(directory)
         self.store = InventoryStore(database)
-        self.profiler = Profiler(sparse_chars=sparse_chars)
-        self.sparse_chars = sparse_chars
+        self.profiler = Profiler(sparse_chars=sparse_chars, scan_coverage=scan_coverage, ocr_share=ocr_share)
 
     def pdf_paths(self, manifest: Path | None = None) -> list[Path]:
         if manifest is not None:
-            return [self.directory / line.strip() for line in manifest.read_text().splitlines() if line.strip()] 
+            return [self.directory / relative for relative in _manifest_paths(manifest)]
         return sorted(path for path in self.directory.rglob('*') if path.suffix.lower() == '.pdf')
 
-    def build(self, manifest: Path | None = None) -> list[DocumentProfile]:
+    def build(self, manifest: Path | None = None, triage: Triage | None = None) -> BuildReport:
+        """Profile new or changed PDFs, then, given ``triage``, classify the pages of every document built here."""
         self.store.create_schema()
-        profiles: list[DocumentProfile] = []
+        counts = {'profiled': 0, 'cached': 0, 'failed': 0, 'missing': 0}
+        built: dict[str, None] = {}
 
         for path in self.pdf_paths(manifest):
+            relative_path = path.relative_to(self.directory).as_posix()
             try:
-                relative_path = path.relative_to(self.directory).as_posix()
-                pdf_profile, page_profiles, _page_texts = self.profiler.profile(path, relative_path)
-            except Exception:
+                stat = path.stat()
+            except OSError:
+                logger.warning('inventory: %s is missing', relative_path)
+                counts['missing'] += 1
                 continue
+            hash_id = self.store.file_hash(relative_path, stat.st_size, stat.st_mtime_ns) or file_hash(path)
+            self.store.set_file(relative_path, hash_id, stat.st_size, stat.st_mtime_ns)
 
-            blank = sum(page.blank for page in page_profiles)
-            sparse = sum(page.text_chars < self.sparse_chars for page in page_profiles)
-            text_share = (pdf_profile.pages - sparse) / pdf_profile.pages if pdf_profile.pages else 0.0
-
-            if pdf_profile.pages > 0 and blank == pdf_profile.pages:
-                text_quality = 'image_only'
-                do_ocr = True
-            elif text_share < 0.5:
-                text_quality = 'mixed'
-                do_ocr = True
-            elif sparse:
-                text_quality = 'mixed'
-                do_ocr = False
+            status = self.store.status(hash_id, PROFILER_VERSION)
+            if status is not None:
+                self.store.set_path(hash_id, relative_path)
+                counts['cached' if status == 'profiled' else 'failed'] += 1
             else:
-                text_quality = 'embedded_text'
-                do_ocr = False
-
-            document = DocumentProfile(pdf_profile, text_quality, do_ocr, sparse, blank, page_profiles)
-            profiles.append(document)
-            self._upsert(document)
-
-        return profiles
-
-    def _upsert(self, document: DocumentProfile) -> None:
-        profile = document.profile
-        with self.store.connect() as connection:
-            connection.execute(
-                '''INSERT INTO documents (
-                    hash_id, relative_path, pages, text_chars, char_min, char_max,
-                    char_mean, char_median, word_count, word_min, word_max, word_mean,
-                    word_median, chars_per_page, size_bytes, text_quality, do_ocr,
-                    sparse_pages, blank_pages, image_xobjects, image_pages,
-                    image_heavy_pages, image_page_share, n_triage_pages,
-                    tail_triage_start, triage_policy, keep_first
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, 'tail', 1)
-                ON CONFLICT(hash_id) DO UPDATE SET
-                    relative_path=excluded.relative_path,
-                    pages=excluded.pages,
-                    text_chars=excluded.text_chars,
-                    char_min=excluded.char_min,
-                    char_max=excluded.char_max,
-                    char_mean=excluded.char_mean,
-                    char_median=excluded.char_median,
-                    word_count=excluded.word_count,
-                    word_min=excluded.word_min,
-                    word_max=excluded.word_max,
-                    word_mean=excluded.word_mean,
-                    word_median=excluded.word_median,
-                    chars_per_page=excluded.chars_per_page,
-                    size_bytes=excluded.size_bytes,
-                    text_quality=excluded.text_quality,
-                    do_ocr=excluded.do_ocr,
-                    sparse_pages=excluded.sparse_pages,
-                    blank_pages=excluded.blank_pages,
-                    image_xobjects=excluded.image_xobjects,
-                    image_pages=excluded.image_pages,
-                    image_heavy_pages=excluded.image_heavy_pages,
-                    image_page_share=excluded.image_page_share,
-                    n_triage_pages=NULL,
-                    tail_triage_start=NULL,
-                    triage_policy='tail',
-                    keep_first=1''',
-                (
-                    profile.hash_id,
-                    profile.relative_path,
-                    profile.pages,
-                    profile.text_chars,
-                    profile.char_min,
-                    profile.char_max,
-                    profile.char_mean,
-                    profile.char_median,
-                    profile.word_count,
-                    profile.word_min,
-                    profile.word_max,
-                    profile.word_mean,
-                    profile.word_median,
-                    profile.chars_per_page,
-                    profile.size_bytes,
-                    document.text_quality,
-                    int(document.do_ocr),
-                    document.sparse_pages,
-                    document.blank_pages,
-                    profile.image_xobjects,
-                    profile.image_pages,
-                    profile.image_heavy_pages,
-                    profile.image_page_share,
-                ),
-            )
-
-            connection.execute('DELETE FROM pages WHERE hash_id=?', (profile.hash_id,))
-            connection.executemany(
-                '''INSERT INTO pages
-                   (hash_id, page_number, text_chars, word_count, blank, sparse, image_xobjects, do_ocr)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
-                (
-                    (
-                        profile.hash_id,
-                        page.page_number,
-                        page.text_chars,
-                        page.word_count,
-                        int(page.blank),
-                        int(page.text_chars < self.sparse_chars),
-                        page.image_xobjects,
-                        int(page.text_chars < self.sparse_chars),
+                try:
+                    result = self.profiler.profile(path, relative_path, hash_id)
+                except Exception as error:
+                    logger.warning('inventory: cannot profile %s: %s', relative_path, error)
+                    self.store.record_error(
+                        hash_id, relative_path, PROFILER_VERSION, f'{type(error).__name__}: {error}'
                     )
-                    for page in document.pages_profile
-                ),
+                    counts['failed'] += 1
+                    continue
+                self.store.save_profile(result, PROFILER_VERSION)
+                counts['profiled'] += 1
+            if status != 'failed':
+                built[hash_id] = None
+
+        triaged = self._triage(built, triage) if triage is not None else 0
+        return BuildReport(**counts, triaged=triaged)
+
+    def _triage(self, hash_ids: Iterable[str], triage: Triage) -> int:
+        """Classify from the stored text; corpus-level classifiers observe every document in the inventory."""
+        classifier, policy = triage.build_classifier(), triage.build_policy()
+        corpus = self.store.corpus_fingerprint() if classifier.needs_corpus else ''
+        pending = [hash_id for hash_id in hash_ids if self.store.triage_state(hash_id) != (triage.key, corpus)]
+        if not pending:
+            return 0
+        if classifier.needs_corpus:
+            for _, texts in self.store.iter_page_texts():
+                classifier.observe(texts)
+        for hash_id, texts in self.store.iter_page_texts(pending):
+            verdicts, skip = run_triage(classifier, policy, texts)
+            self.store.save_triage(
+                hash_id,
+                key=triage.key,
+                corpus=corpus,
+                policy=triage.policy,
+                keep_first=triage.keep_first,
+                verdicts=verdicts,
+                skip=skip,
             )
+        return len(pending)
+
+    def profiles(
+        self, *, include_text_quality: tuple[str, ...] | None = None, include_ocr: bool | None = None
+    ) -> list[PDFProfile]:
+        return self.store.profiles(include_text_quality, include_ocr)
+
+    def pages(self, hash_id: str) -> tuple[PageProfile, ...]:
+        return self.store.pages(hash_id)
 
     def sources(
         self,
+        manifest: Path | None = None,
         *,
         include_text_quality: tuple[str, ...] | None = None,
         include_ocr: bool | None = None,
     ) -> list[PdfSource]:
-        if include_text_quality is None and include_ocr is None:
-            return [
-                PdfSource.from_path(path, relative_path=path.relative_to(self.directory).as_posix())
-                for path in self.pdf_paths()
-            ]
+        """Built files still on disk, one per unique content, optionally limited to ``manifest``.
 
-        with self.store.connect() as connection:
-            if include_text_quality is not None:
-                placeholders = ', '.join('?' for _ in include_text_quality)
-                clause = f'text_quality IN ({placeholders})'
-                params: list[object] = list(include_text_quality)
-            else:
-                clause = '1=1'
-                params = []
-            if include_ocr is not None:
-                clause += ' AND do_ocr=?'
-                params.append(int(include_ocr))
-            rows = connection.execute(
-                f'SELECT relative_path, hash_id FROM documents WHERE {clause} ORDER BY relative_path',
-                params,
-            ).fetchall()
-
+        Files pypdf could not read are included when no filter is given, so the pipeline records their failure.
+        """
+        wanted = set(_manifest_paths(manifest)) if manifest is not None else None
         sources: list[PdfSource] = []
-        for relative_path, hash_id in rows:
+        seen: set[str] = set()
+        for relative_path, hash_id in self.store.file_rows(include_text_quality, include_ocr):
+            if hash_id in seen or (wanted is not None and relative_path not in wanted):
+                continue
             path = self.directory / relative_path
             if path.exists():
+                seen.add(hash_id)
                 sources.append(PdfSource(path=path, hash_id=hash_id, metadata={'relative_path': relative_path}))
         return sources
 
@@ -223,22 +173,10 @@ class Inventory:
         include_text_quality: tuple[str, ...] | None = None,
         include_ocr: bool | None = None,
     ) -> list[str]:
-        with self.store.connect() as connection:
-            if include_text_quality is not None:
-                placeholders = ', '.join('?' for _ in include_text_quality)
-                clause = f'text_quality IN ({placeholders})'
-                params: list[object] = list(include_text_quality)
-            else:
-                clause = '1=1'
-                params = []
-            if include_ocr is not None:
-                clause += ' AND do_ocr=?'
-                params.append(int(include_ocr))
-            rows = connection.execute(
-                f'SELECT relative_path FROM documents WHERE {clause} ORDER BY relative_path',
-                params,
-            ).fetchall()
-        return [row[0] for row in rows]
+        return [
+            source.relative_path
+            for source in self.sources(include_text_quality=include_text_quality, include_ocr=include_ocr)
+        ]
 
     def sample(
         self,
@@ -252,8 +190,12 @@ class Inventory:
         from .sampling import StratifiedSampler
 
         return StratifiedSampler(
-            self.store.path,
+            self.store,
             per_stratum=per_stratum,
             seed=seed,
             page_bands=page_bands,
         ).sample(text_quality=text_quality, do_ocr=include_ocr)
+
+
+def _manifest_paths(manifest: Path) -> list[str]:
+    return [line.strip() for line in manifest.read_text(encoding='utf-8').splitlines() if line.strip()]

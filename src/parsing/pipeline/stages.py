@@ -5,14 +5,14 @@ from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field, replace
 from pathlib import Path
 
-from inventory import PdfSource
+from inventory import InventoryStore, PdfSource
+from inventory.triage import PageVerdict, Triage, run_triage
 from pypdf import PdfReader
 
 from ..core import ParsedDocument
 from ..parsers import Parser
 from ..postprocess import DocumentProcessor
 from ..render import Renderer
-from ..triage import PageClassifier, PageVerdict, SkipPolicy
 from .routing import DEFAULT_ROUTE, Router
 
 
@@ -43,32 +43,49 @@ class Stage(ABC):
     def run(self, item: WorkItem) -> WorkItem: ...
 
 
-def read_text_layer(source: PdfSource) -> tuple[str, ...]:
-    return tuple(page.extract_text() or '' for page in PdfReader(source.path).pages)
+def read_text_layer(source: PdfSource, store: InventoryStore | None = None) -> tuple[str, ...]:
+    """The pypdf text layer, from the inventory when it holds this content, else read from the PDF."""
+    texts = store.page_texts(source.hash_id) if store is not None else None
+    if texts is None:
+        texts = tuple(page.extract_text() or '' for page in PdfReader(source.path).pages)
+    return texts
 
 
 class TextLayerStage(Stage):
-    """Reads each page's embedded text once with pypdf, for triage and routing."""
+    """Each page's embedded text, for triage and routing; reused from the inventory rather than re-read."""
+
+    def __init__(self, store: InventoryStore | None = None) -> None:
+        self.store = store
 
     def run(self, item: WorkItem) -> WorkItem:
-        return replace(item, page_texts=read_text_layer(item.source))
+        return replace(item, page_texts=read_text_layer(item.source, self.store))
 
 
 class TriageStage(Stage):
-    """Marks boilerplate pages so the parser skips them."""
+    """Marks boilerplate pages so the parser skips them, reusing verdicts the inventory stored for these settings."""
 
-    def __init__(self, classifier: PageClassifier, policy: SkipPolicy) -> None:
-        self.classifier = classifier
-        self.policy = policy
+    def __init__(self, triage: Triage, store: InventoryStore | None = None) -> None:
+        self.triage = triage
+        self.store = store
+        self.classifier = triage.build_classifier()
+        self.policy = triage.build_policy()
 
     def prepare(self, corpus: Iterable[PdfSource]) -> None:
-        if self.classifier.needs_corpus:
-            for source in corpus:
-                self.classifier.observe(read_text_layer(source))
+        if not self.classifier.needs_corpus:
+            return
+        corpus = list(corpus)
+        if all(self._stored(source) is not None for source in corpus):
+            return
+        for source in corpus:
+            self.classifier.observe(read_text_layer(source, self.store))
 
     def run(self, item: WorkItem) -> WorkItem:
-        verdicts = self.classifier.classify(item.page_texts)
-        return replace(item, skip=self.policy.skip(verdicts), verdicts=tuple(verdicts))
+        stored = self._stored(item.source)
+        verdicts, skip = stored if stored is not None else run_triage(self.classifier, self.policy, item.page_texts)
+        return replace(item, skip=skip, verdicts=verdicts)
+
+    def _stored(self, source: PdfSource) -> tuple[tuple[PageVerdict, ...], frozenset[int]] | None:
+        return self.store.triage(source.hash_id, self.triage.key) if self.store is not None else None
 
 
 class RouteStage(Stage):

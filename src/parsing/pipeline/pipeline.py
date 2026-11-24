@@ -4,10 +4,10 @@ import logging
 from collections.abc import Iterator, Sequence
 from functools import reduce
 
-from inventory import PdfSource
+from inventory import InventoryStore, PdfSource
 
 from ..parsers import get_parser
-from .components import build_classifier, build_policy, build_processor, build_renderer
+from .components import build_processor, build_renderer, build_triage
 from .config import RunConfig
 from .manifest import RunManifest
 from .routing import DEFAULT_ROUTE, Router, SparseTextRoute
@@ -33,11 +33,11 @@ class Pipeline:
         self.manifest = manifest
 
     @classmethod
-    def from_config(cls, config: RunConfig) -> Pipeline:
-        stages: list[Stage] = [TextLayerStage()]
+    def from_config(cls, config: RunConfig, store: InventoryStore | None = None) -> Pipeline:
+        """``store``, when given, supplies text layers and triage verdicts the inventory already computed."""
+        stages: list[Stage] = [TextLayerStage(store)]
         if config.triage:
-            classifier = build_classifier(config.triage.classifiers)
-            stages.append(TriageStage(classifier, build_policy(config.triage.policy, config.triage.keep_first)))
+            stages.append(TriageStage(build_triage(config.triage), store))
         base = config.parser
         parsers = {DEFAULT_ROUTE: get_parser(base.name, base.options)}
         if config.routes:

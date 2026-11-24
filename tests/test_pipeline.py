@@ -5,7 +5,8 @@ from pathlib import Path
 
 from evaluation import Evaluator, summarise
 from inventory import Inventory
-from parsing.pipeline import Pipeline, RunConfig, RunManifest
+from parsing.pipeline import Pipeline, RunConfig, RunManifest, stages
+from parsing.pipeline.components import build_triage
 
 DISCLOSURE = [
     'Important disclosures and analyst certification',
@@ -50,6 +51,28 @@ def test_pipeline_skips_boilerplate_and_writes_outputs(tmp_path: Path, make_pdf)
     assert row['coverage.word_recall'] == 1.0
     assert row['numbers.number_recall'] == 1.0
     assert summarise([row])[0]['documents'] == 1
+
+
+def test_pipeline_reuses_inventory_text_and_triage(tmp_path: Path, make_pdf, monkeypatch) -> None:
+    make_pdf('raw/bnp/note.pdf', [['Copper outlook 2025'], ['More analysis'], DISCLOSURE])
+    make_pdf('raw/bnp/other.pdf', [['Not in the manifest']])
+    manifest = tmp_path / 'manifest.txt'
+    manifest.write_text('bnp/note.pdf\n')
+    config = _config(tmp_path)
+    inventory = Inventory(config.input.directory, tmp_path / 'inventory.db')
+    inventory.build(manifest, triage=build_triage(config.triage))
+
+    def no_pypdf(*_args, **_kwargs):
+        raise AssertionError('the stages must reuse the inventory instead of reading the PDF')
+
+    monkeypatch.setattr(stages, 'PdfReader', no_pypdf)
+    pipeline = Pipeline.from_config(config, store=inventory.store)
+    monkeypatch.setattr(pipeline.stages[1].classifier, 'classify', no_pypdf)  # verdicts come from the store
+    items = list(pipeline.run(inventory.sources(manifest)))
+
+    assert [item.source.doc_id for item in items] == ['note']
+    assert items[0].skip == frozenset({3})
+    assert items[0].page_texts[0].startswith('Copper outlook 2025')
 
 
 def test_pipeline_logs_failures_and_continues(tmp_path: Path, make_pdf) -> None:

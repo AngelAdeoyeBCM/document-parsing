@@ -8,7 +8,8 @@ from pathlib import Path
 from inventory import Inventory, PdfSource
 
 from .parsers import available
-from .pipeline import InputSpec, Pipeline, RunConfig
+from .pipeline import Pipeline, RunConfig
+from .pipeline.components import build_triage
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +32,7 @@ def _arguments() -> argparse.ArgumentParser:
     inventory = commands.add_parser('inventory', help='profile every PDF (pages, text-layer size)')
     inventory.add_argument('--directory', type=Path, required=True)
     inventory.add_argument('--out', type=Path, required=True)
+    inventory.add_argument('--config', type=Path, help="run config whose 'triage:' block to apply while profiling")
     inventory.set_defaults(handler=_inventory)
 
     sample = commands.add_parser('sample', help='draw a manifest from a SQLite inventory')
@@ -54,17 +56,19 @@ def _parsers(_: argparse.Namespace) -> int:
 def _run(args: argparse.Namespace) -> int:
     config = RunConfig.load(args.config)
     index, count = (int(part) for part in args.shard.split('/'))
-    corpus = _sources(config.input)
-    pipeline = Pipeline.from_config(config)
+    inventory = Inventory(config.input.directory, config.input.directory / 'inventory.db')
+    corpus = _sources(inventory, config)
+    pipeline = Pipeline.from_config(config, store=inventory.store)
     done = sum(1 for _ in pipeline.run(corpus[index::count], corpus=corpus))
     logger.info('%s: %d/%d documents parsed into %s', config.name, done, len(corpus[index::count]), config.output)
     return 0
 
 
 def _inventory(args: argparse.Namespace) -> int:
-    inventory = Inventory(args.directory, args.out)
-    profiles = inventory.build()
-    logger.info('inventory: profiled %d PDFs into %s', len(profiles), args.out)
+    config = RunConfig.load(args.config) if args.config else None
+    triage = build_triage(config.triage) if config and config.triage else None
+    report = Inventory(args.directory, args.out).build(triage=triage)
+    logger.info('inventory: %s into %s', report, args.out)
     return 0
 
 
@@ -77,8 +81,9 @@ def _sample(args: argparse.Namespace) -> int:
     return 0
 
 
-def _sources(spec: InputSpec) -> list[PdfSource]:
-    inventory = Inventory(spec.directory, spec.directory / 'inventory.db')
-    inventory.build(spec.manifest)
-    sources = inventory.sources()
+def _sources(inventory: Inventory, config: RunConfig) -> list[PdfSource]:
+    spec = config.input
+    report = inventory.build(spec.manifest, triage=build_triage(config.triage) if config.triage else None)
+    logger.info('inventory: %s', report)
+    sources = inventory.sources(spec.manifest)
     return sources[: spec.limit] if spec.limit else sources
