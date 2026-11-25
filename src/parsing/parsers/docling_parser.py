@@ -97,6 +97,7 @@ class DoclingStandardConfig(DoclingConfig):
     heading_hierarchy: bool = False
     script_positions_enabled: bool = False
     use_reading_order_separators: bool = True
+    use_embedded_picture_images: bool = False
     classify_pictures: bool = False
     extract_charts: bool = False  # chart-to-table with Docling's default chart VLM
     describe_url: str | None = None  # OpenAI-compatible chat completions URL for picture descriptions
@@ -138,6 +139,7 @@ class DoclingStandardParser(DoclingParser):
             use_reading_order_separators=c.use_reading_order_separators,
             do_picture_classification=c.classify_pictures,
             do_chart_extraction=c.extract_charts,
+            use_embedded_picture_images=c.use_embedded_picture_images,
         )
         options.table_structure_options.mode = TableFormerMode(c.table_mode)
         options.table_structure_options.do_cell_matching = c.cell_matching

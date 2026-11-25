@@ -173,3 +173,25 @@ def test_stratified_sample_is_deterministic(tmp_path, make_pdf):
     first = inventory.sample(per_stratum=2, seed=7)
     assert len(first) == 2
     assert inventory.sample(per_stratum=2, seed=7) == first
+
+
+def test_numbered_stratified_sample_is_deterministic(tmp_path, make_pdf):
+    for index in range(12):
+        make_pdf(f'corpus/{index}.pdf', [[f'{TEXT} {index}']])
+    inventory = Inventory(tmp_path / 'corpus', tmp_path / 'inventory.db')
+    inventory.build()
+
+    first = inventory.sample(number=5, seed=29)
+    assert len(first) == 5
+    assert inventory.sample(number=5, seed=29) == first
+
+
+def test_sample_uses_kept_page_count_for_length_bands(tmp_path, make_pdf):
+    make_pdf('corpus/short.pdf', [[TEXT], [TEXT], DISCLOSURE])
+    make_pdf('corpus/long.pdf', [[TEXT] for _ in range(20)])
+    inventory = Inventory(tmp_path / 'corpus', tmp_path / 'inventory.db')
+    triage = Triage.of(['rules'], policy='tail', keep_first=1)
+    inventory.build(triage=triage)
+
+    chosen = inventory.sample(number=2, seed=3)
+    assert len(chosen) == 2

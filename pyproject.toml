@@ -8,6 +8,7 @@ dependencies = [
     "pypdf>=5",
     "pypdfium2>=4.30",
     "pyyaml>=6",
+    "fonttools>=4.60",
 ]
 
 [project.optional-dependencies]
@@ -18,7 +19,7 @@ parsing = "parsing.cli:main"
 evaluation = "evaluation.cli:main"
 
 [dependency-groups]
-dev = ["pytest>=8", "ruff>=0.6"]
+dev = ["ipykernel>=6", "pytest>=8", "ruff>=0.6"]
 
 [build-system]
 requires = ["hatchling"]

@@ -262,6 +262,17 @@ class InventoryStore:
                 f'SELECT hash_id, relative_path, pages, text_quality, do_ocr FROM documents WHERE {clause}', params
             ).fetchall()
 
+    def sampling_rows(
+        self, text_quality: Iterable[str] | None = None, do_ocr: bool | None = None
+    ) -> list[tuple[str, str, int, int, str, int]]:
+        """Full-document strata rows with original and triage-adjusted page counts."""
+        clause, params = where(text_quality, do_ocr)
+        with self.transaction() as connection:
+            return connection.execute(
+                f'SELECT hash_id, relative_path, pages, n_triage_pages, text_quality, do_ocr '
+                f'FROM documents WHERE {clause}', params
+            ).fetchall()
+
     # -- page text -----------------------------------------------------------------------------------------------
 
     def page_texts(self, hash_id: str) -> tuple[str, ...] | None:

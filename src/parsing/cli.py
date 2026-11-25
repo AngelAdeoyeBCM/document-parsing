@@ -38,9 +38,10 @@ def _arguments() -> argparse.ArgumentParser:
     sample = commands.add_parser('sample', help='draw a manifest from a SQLite inventory')
     sample.add_argument('--directory', type=Path, required=True)
     sample.add_argument('--database', type=Path, required=True)
-    sample.add_argument('--per-stratum', type=int, default=10)
+    sample.add_argument('--per-stratum', type=int, default=None, help='legacy per-stratum limit; ignored when --number is set')
     sample.add_argument('--seed', type=int, default=0)
     sample.add_argument('--out', type=Path, required=True)
+    sample.add_argument('--number', '--count', dest='number', type=int, default=50, help='total number of full PDFs to sample')
     sample.set_defaults(handler=_sample)
 
     parsers = commands.add_parser('parsers', help='list available parsers')
@@ -74,7 +75,11 @@ def _inventory(args: argparse.Namespace) -> int:
 
 def _sample(args: argparse.Namespace) -> int:
     inventory = Inventory(args.directory, args.database)
-    chosen = inventory.relative_paths()
+    chosen = inventory.sample(
+        number=args.number if args.per_stratum is None else None,
+        per_stratum=args.per_stratum,
+        seed=args.seed,
+    )
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(''.join(f'{relative_path}\n' for relative_path in chosen), encoding='utf-8')
     logger.info('wrote %d documents to %s', len(chosen), args.out)

@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from pypdf import PdfReader
+from pypdf import PdfReader, apply_configuration
 from pypdf.generic import DictionaryObject
 
 # Bump whenever profiling output changes, so stored profiles are recomputed rather than reused.
@@ -74,12 +74,37 @@ class ProfileResult:
 class Profiler:
     """One pypdf pass per PDF: the text layer, its statistics, and how much of each page is drawn as images."""
 
-    def __init__(self, sparse_chars: int = 50, scan_coverage: float = 0.5, ocr_share: float = 0.5) -> None:
+    def __init__(
+        self,
+        sparse_chars: int = 50,
+        scan_coverage: float = 0.5,
+        ocr_share: float = 0.5,
+        *,
+        zlib_maximum_output_length: int = 300_000_000,
+        array_based_stream_maximum_output_length: int = 300_000_000,
+        image_maximum_buffer_size: int = 300_000_000,
+        stream_decoding_work_maximum_length: int = 1_000_000_000,
+        stream_parsing_work_maximum_count: int = 20_000_000,
+        maximum_declared_stream_length: int = 300_000_000,
+    ) -> None:
         self.sparse_chars = sparse_chars
         self.scan_coverage = scan_coverage
         self.ocr_share = ocr_share
+        self.pdf_configuration = {
+            'zlib_maximum_output_length': zlib_maximum_output_length,
+            'array_based_stream_maximum_output_length': array_based_stream_maximum_output_length,
+            'image_maximum_buffer_size': image_maximum_buffer_size,
+            'stream_decoding_work_maximum_length': stream_decoding_work_maximum_length,
+            'stream_parsing_work_maximum_count': stream_parsing_work_maximum_count,
+            'maximum_declared_stream_length': maximum_declared_stream_length,
+        }
 
     def profile(self, path: Path, relative_path: str, hash_id: str) -> ProfileResult:
+        path = Path(path)
+        with apply_configuration(**self.pdf_configuration):
+            return self._profile(path, relative_path, hash_id)
+
+    def _profile(self, path: Path, relative_path: str, hash_id: str) -> ProfileResult:
         path = Path(path)
         reader = PdfReader(path)
         texts: list[str] = []

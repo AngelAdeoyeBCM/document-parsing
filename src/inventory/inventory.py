@@ -181,7 +181,8 @@ class Inventory:
     def sample(
         self,
         *,
-        per_stratum: int = 10,
+        number: int | None = None,
+        per_stratum: int | None = None,
         seed: int = 0,
         text_quality: tuple[str, ...] | None = None,
         include_ocr: bool | None = None,
@@ -191,6 +192,7 @@ class Inventory:
 
         return StratifiedSampler(
             self.store,
+            number=number,
             per_stratum=per_stratum,
             seed=seed,
             page_bands=page_bands,
