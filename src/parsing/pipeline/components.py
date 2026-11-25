@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 from typing import Any
 
-from inventory import Triage
+from triage import Triage
 
 from ..postprocess import ChartFilter, DocumentProcessor
 from ..render import JsonRenderer, MarkdownRenderer, ProofRenderer, Renderer
@@ -14,11 +14,7 @@ RENDERERS: Mapping[str, type[Renderer]] = {'json': JsonRenderer, 'markdown': Mar
 
 
 def build_triage(spec: TriageSpec) -> Triage:
-    return Triage(
-        classifiers=tuple((classifier.name, dict(classifier.options)) for classifier in spec.classifiers),
-        policy=spec.policy,
-        keep_first=spec.keep_first,
-    )
+    return Triage(policy=spec.policy, keep_first=spec.keep_first, min_hits=spec.min_hits)
 
 
 def build_renderer(spec: ComponentSpec) -> Renderer:

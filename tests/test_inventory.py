@@ -6,7 +6,8 @@ import pytest
 from conftest import Image
 
 import inventory.profiler as profiler_module
-from inventory import Inventory, Triage
+from inventory import Inventory
+from triage import Triage
 
 TEXT = 'Enough meaningful text on this page to exceed the configured sparse threshold for embedded text'
 DISCLOSURE = [
@@ -88,7 +89,7 @@ def test_pypdf_reads_each_file_once_ever(tmp_path, make_pdf, reads):
     assert inventory.build().profiled == 2
     assert len(reads) == 2
 
-    report = inventory.build(triage=Triage.of(['rules']))
+    report = inventory.build(triage=Triage())
     assert (report.profiled, report.cached, report.triaged) == (0, 2, 2)
     assert len(reads) == 2  # cached profiles; triage ran on the stored text
 
@@ -135,14 +136,14 @@ def test_sources_respect_the_manifest(tmp_path, make_pdf, reads):
 def test_build_records_triage_verdicts(tmp_path, make_pdf):
     make_pdf('corpus/note.pdf', [[TEXT], [TEXT], DISCLOSURE])
     inventory = Inventory(tmp_path / 'corpus', tmp_path / 'inventory.db')
-    triage = Triage.of(['rules'], policy='tail', keep_first=1)
+    triage = Triage(policy='tail', keep_first=1)
     assert inventory.build(triage=triage).triaged == 1
 
     [profile] = inventory.profiles()
     verdicts, skip = inventory.store.triage(profile.hash_id, triage.key)
     assert skip == frozenset({3})
     assert [verdict.boilerplate for verdict in verdicts] == [False, False, True]
-    assert inventory.store.triage(profile.hash_id, Triage.of(['rules'], policy='flagged').key) is None
+    assert inventory.store.triage(profile.hash_id, Triage(policy='flagged').key) is None
 
     with sqlite3.connect(inventory.store.path) as connection:
         row = connection.execute('SELECT triage_policy, skip_pages, n_triage_pages, tail_triage_start FROM documents')
@@ -151,18 +152,17 @@ def test_build_records_triage_verdicts(tmp_path, make_pdf):
     assert inventory.build(triage=triage).triaged == 0  # same settings and corpus: nothing to redo
 
 
-def test_corpus_triage_reruns_when_the_corpus_changes(tmp_path, make_pdf):
+def test_rules_triage_does_not_depend_on_corpus_changes(tmp_path, make_pdf):
     make_pdf('corpus/a.pdf', [[TEXT], DISCLOSURE])
     make_pdf('corpus/b.pdf', [[TEXT + ' b'], DISCLOSURE])
     inventory = Inventory(tmp_path / 'corpus', tmp_path / 'inventory.db')
-    triage = Triage.of([('repetition', {'min_documents': 3, 'min_share': 0.6})])
+    triage = Triage(policy='tail', keep_first=1)
 
-    inventory.build(triage=triage)
-    assert {inventory.store.triage(p.hash_id, triage.key)[1] for p in inventory.profiles()} == {frozenset()}
+    assert inventory.build(triage=triage).triaged == 2
+    assert {inventory.store.triage(p.hash_id, triage.key)[1] for p in inventory.profiles()} == {frozenset({2})}
 
     make_pdf('corpus/c.pdf', [[TEXT + ' c'], DISCLOSURE])
-    assert inventory.build(triage=triage).triaged == 3  # a third copy of the disclosure page tips the threshold
-    assert {inventory.store.triage(p.hash_id, triage.key)[1] for p in inventory.profiles()} == {frozenset({2})}
+    assert inventory.build(triage=triage).triaged == 1
 
 
 def test_stratified_sample_is_deterministic(tmp_path, make_pdf):
@@ -190,7 +190,7 @@ def test_sample_uses_kept_page_count_for_length_bands(tmp_path, make_pdf):
     make_pdf('corpus/short.pdf', [[TEXT], [TEXT], DISCLOSURE])
     make_pdf('corpus/long.pdf', [[TEXT] for _ in range(20)])
     inventory = Inventory(tmp_path / 'corpus', tmp_path / 'inventory.db')
-    triage = Triage.of(['rules'], policy='tail', keep_first=1)
+    triage = Triage(policy='tail', keep_first=1)
     inventory.build(triage=triage)
 
     chosen = inventory.sample(number=2, seed=3)

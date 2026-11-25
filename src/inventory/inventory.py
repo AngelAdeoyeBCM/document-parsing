@@ -8,7 +8,7 @@ from pathlib import Path
 
 from .profiler import PROFILER_VERSION, PageProfile, PDFProfile, Profiler
 from .store import InventoryStore
-from .triage import Triage, run_triage
+from triage import Triage, run_triage
 
 logger = logging.getLogger(__name__)
 
@@ -114,21 +114,17 @@ class Inventory:
         return BuildReport(**counts, triaged=triaged)
 
     def _triage(self, hash_ids: Iterable[str], triage: Triage) -> int:
-        """Classify from the stored text; corpus-level classifiers observe every document in the inventory."""
+        """Classify from the stored text using the fixed page-local rules."""
         classifier, policy = triage.build_classifier(), triage.build_policy()
-        corpus = self.store.corpus_fingerprint() if classifier.needs_corpus else ''
-        pending = [hash_id for hash_id in hash_ids if self.store.triage_state(hash_id) != (triage.key, corpus)]
+        pending = [hash_id for hash_id in hash_ids if self.store.triage_state(hash_id) != (triage.key, '')]
         if not pending:
             return 0
-        if classifier.needs_corpus:
-            for _, texts in self.store.iter_page_texts():
-                classifier.observe(texts)
         for hash_id, texts in self.store.iter_page_texts(pending):
             verdicts, skip = run_triage(classifier, policy, texts)
             self.store.save_triage(
                 hash_id,
                 key=triage.key,
-                corpus=corpus,
+                corpus='',
                 policy=triage.policy,
                 keep_first=triage.keep_first,
                 verdicts=verdicts,

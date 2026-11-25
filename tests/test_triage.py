@@ -1,21 +1,12 @@
 from __future__ import annotations
 
 import pytest
-
-from inventory.triage import (
-    CompositeClassifier,
-    FlaggedPolicy,
-    PageVerdict,
-    RepetitionClassifier,
-    RuleClassifier,
-    TailPolicy,
-)
+from triage import FlaggedPolicy, PageVerdict, RuleClassifier, TailPolicy
 
 DISCLOSURE = (
     'Important disclosures. Analyst certification: the views expressed accurately reflect. '
     'This report has been prepared by the bank. Past performance is not indicative.'
 )
-DISCLAIMER_LINE = 'This material is for professional investors only and is not an offer to buy'
 
 
 def test_rules_flag_disclosure_pages_only() -> None:
@@ -23,20 +14,16 @@ def test_rules_flag_disclosure_pages_only() -> None:
     assert [verdict.boilerplate for verdict in verdicts] == [False, True]
 
 
-def test_repetition_flags_lines_shared_across_documents() -> None:
-    classifier = RepetitionClassifier(min_documents=3, min_share=0.6)
-    assert classifier.needs_corpus
-    for index in range(3):
-        classifier.observe([f'Unique analysis number {index} about the euro area outlook', DISCLAIMER_LINE])
-    verdicts = classifier.classify(['Fresh content that nobody else wrote about copper', DISCLAIMER_LINE])
-    assert [verdict.boilerplate for verdict in verdicts] == [False, True]
-
-
-def test_composite_takes_any_member() -> None:
-    composite = CompositeClassifier([RuleClassifier(), RepetitionClassifier(min_documents=1)])
-    composite.observe(['shared line that appears in every single document'])
-    verdicts = composite.classify([DISCLOSURE, 'shared line that appears in every single document', 'novel text here'])
-    assert [verdict.boilerplate for verdict in verdicts] == [True, True, False]
+def test_rules_use_flexible_disclaimer_phrasing() -> None:
+    stored_style_page = (
+        'Disclaimers and Important Risk Information. '
+        'This communication is provided only to professional clients or eligible counterparties. '
+        'The information is of a general nature only and has not been reviewed by any regulatory authority. '
+        'State Street entities are authorized and regulated by the relevant authorities. '
+        'All rights reserved.'
+    )
+    verdicts = RuleClassifier().classify([stored_style_page, 'The euro area recovery continues.'])
+    assert [verdict.boilerplate for verdict in verdicts] == [True, False]
 
 
 def _verdicts(pages: int, flagged: set[int]) -> list[PageVerdict]:

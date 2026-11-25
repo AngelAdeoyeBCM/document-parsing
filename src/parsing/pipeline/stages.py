@@ -6,7 +6,7 @@ from dataclasses import dataclass, field, replace
 from pathlib import Path
 
 from inventory import InventoryStore, PdfSource
-from inventory.triage import PageVerdict, Triage, run_triage
+from triage import PageVerdict, Triage, run_triage
 from pypdf import PdfReader
 
 from ..core import ParsedDocument
@@ -69,15 +69,6 @@ class TriageStage(Stage):
         self.store = store
         self.classifier = triage.build_classifier()
         self.policy = triage.build_policy()
-
-    def prepare(self, corpus: Iterable[PdfSource]) -> None:
-        if not self.classifier.needs_corpus:
-            return
-        corpus = list(corpus)
-        if all(self._stored(source) is not None for source in corpus):
-            return
-        for source in corpus:
-            self.classifier.observe(read_text_layer(source, self.store))
 
     def run(self, item: WorkItem) -> WorkItem:
         stored = self._stored(item.source)

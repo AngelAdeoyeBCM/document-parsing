@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from .profiler import PageProfile, PDFProfile, ProfileResult
-from .triage import PageVerdict
+from triage import PageVerdict
 
 # Bump on any schema change; an inventory with another version is dropped and rebuilt, since it is only a cache.
 SCHEMA_VERSION = 2

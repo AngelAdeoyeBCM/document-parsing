@@ -22,7 +22,7 @@ def _config(tmp_path: Path) -> RunConfig:
             'input': {'directory': str(tmp_path / 'raw')},
             'output': str(tmp_path / 'out'),
             'parser': {'name': 'pypdf'},
-            'triage': {'classifiers': ['rules']},
+            'triage': {'policy': 'tail', 'keep_first': 1, 'min_hits': 3},
         }
     )
 

@@ -34,9 +34,9 @@ class InputSpec:
 
 @dataclass(frozen=True, slots=True)
 class TriageSpec:
-    classifiers: tuple[ComponentSpec, ...]
     policy: str = 'tail'  # how flagged pages become skipped pages
     keep_first: int = 1  # cover pages are never dropped
+    min_hits: int = 3
 
 
 @dataclass(frozen=True, slots=True)
@@ -78,9 +78,9 @@ class RunConfig:
             output=Path(raw['output']),
             parser=ComponentSpec.parse(raw['parser']),
             triage=TriageSpec(
-                classifiers=tuple(ComponentSpec.parse(item) for item in triage['classifiers']),
                 policy=triage.get('policy', 'tail'),
                 keep_first=triage.get('keep_first', 1),
+                min_hits=triage.get('min_hits', 3),
             )
             if triage
             else None,

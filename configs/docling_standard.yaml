@@ -6,11 +6,7 @@ output: outputs/docling_standard
 triage:
   policy: tail  # skip one block ending at the last page; 'flagged' skips every flagged page
   keep_first: 1
-  classifiers:
-    - name: rules
-      options: {min_hits: 3}
-    - name: repetition
-      options: {min_documents: 20, min_share: 0.6}
+  min_hits: 3
 parser:
   name: docling
   options:

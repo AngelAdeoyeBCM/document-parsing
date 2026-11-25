@@ -4,7 +4,9 @@ input:
   manifest: data/sample.txt
 output: outputs/docling_vlm
 triage:
-  classifiers: [rules, repetition]
+  policy: tail
+  keep_first: 1
+  min_hits: 3
 parser:
   name: docling-vlm
   options:
