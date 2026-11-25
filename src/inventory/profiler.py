@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import statistics
+import time
 from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
@@ -10,7 +11,7 @@ from pypdf import PdfReader, apply_configuration
 from pypdf.generic import DictionaryObject
 
 # Bump whenever profiling output changes, so stored profiles are recomputed rather than reused.
-PROFILER_VERSION = 2
+PROFILER_VERSION = 3  # 3: pypdf extraction time
 
 _IDENTITY = (1.0, 0.0, 0.0, 1.0, 0.0, 0.0)
 
@@ -24,6 +25,7 @@ class PageProfile:
     image_coverage: float = 0.0  # summed drawn image area over the page area, capped at 1
     sparse: bool = False  # under the profiler's ``sparse_chars``
     needs_ocr: bool = False  # sparse text over an image covering at least ``scan_coverage``: a scanned page
+    pypdf_seconds: float = 0.0  # extracting this page's text, the baseline other parsers are timed against
 
     @property
     def blank(self) -> bool:
@@ -52,6 +54,7 @@ class PDFProfile:
     scanned_pages: int
     max_image_coverage: float
     size_bytes: int
+    pypdf_seconds: float  # opening the PDF plus extracting every page's text
     text_quality: str  # 'embedded_text', 'mixed' (some sparse pages) or 'image_only' (every page sparse)
     do_ocr: bool  # at least ``ocr_share`` of the pages are scanned
 
@@ -106,12 +109,16 @@ class Profiler:
 
     def _profile(self, path: Path, relative_path: str, hash_id: str) -> ProfileResult:
         path = Path(path)
+        start = time.perf_counter()
         reader = PdfReader(path)
+        opening = time.perf_counter() - start
         texts: list[str] = []
         pages: list[PageProfile] = []
         for number, page in enumerate(reader.pages, start=1):
             images = _ImageCollector(page)
+            start = time.perf_counter()
             text = page.extract_text(visitor_operand_before=images.before, visitor_operand_after=images.after) or ''
+            seconds = time.perf_counter() - start
             chars, words = len(text.strip()), len(text.split())
             coverage = images.coverage(_page_area(page))
             sparse = chars < self.sparse_chars
@@ -125,13 +132,15 @@ class Profiler:
                     image_coverage=coverage,
                     sparse=sparse,
                     needs_ocr=sparse and coverage >= self.scan_coverage,
+                    pypdf_seconds=seconds,
                 )
             )
-        return ProfileResult(
-            self._summarise(pages, relative_path, hash_id, path.stat().st_size), tuple(pages), tuple(texts)
-        )
+        summary = self._summarise(pages, relative_path, hash_id, path.stat().st_size, opening)
+        return ProfileResult(summary, tuple(pages), tuple(texts))
 
-    def _summarise(self, pages: Sequence[PageProfile], relative_path: str, hash_id: str, size: int) -> PDFProfile:
+    def _summarise(
+        self, pages: Sequence[PageProfile], relative_path: str, hash_id: str, size: int, opening: float
+    ) -> PDFProfile:
         chars = [page.text_chars for page in pages]
         words = [page.word_count for page in pages]
         sparse = sum(page.sparse for page in pages)
@@ -163,6 +172,7 @@ class Profiler:
             scanned_pages=scanned,
             max_image_coverage=max((page.image_coverage for page in pages), default=0.0),
             size_bytes=size,
+            pypdf_seconds=opening + sum(page.pypdf_seconds for page in pages),
             text_quality=text_quality,
             do_ocr=bool(pages) and scanned / len(pages) >= self.ocr_share,
         )

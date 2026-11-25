@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import tempfile
 from abc import abstractmethod
-from collections.abc import Sequence
+from collections.abc import Collection, Mapping, Sequence
 from dataclasses import dataclass
+from functools import reduce
 from pathlib import Path
+from typing import IO
 
 from docling_core.types.doc import DoclingDocument
 from pypdf import PdfReader, PdfWriter
@@ -24,22 +26,32 @@ class ModelParser(Parser):
 
     config: ModelConfig
 
-    def _convert(self, source: PdfSource, skip: frozenset[int]) -> DoclingDocument:
+    def _convert(self, source: PdfSource, skip: frozenset[int], texts: Sequence[str] = ()) -> DoclingDocument:
         if not skip:
             return self._convert_pdf(source.path)
         with tempfile.TemporaryDirectory() as tmp:
             subset = Path(tmp) / source.path.name
-            kept = _write_subset(source.path, skip, subset)
+            kept = write_subset(source.path, skip, subset)
             if not kept:
                 return DoclingDocument(name=source.doc_id)
-            return _renumber(self._convert_pdf(subset), kept)
+            return renumber(self._convert_pdf(subset), kept)
 
     @abstractmethod
     def _convert_pdf(self, path: Path) -> DoclingDocument:
         """Convert every page of the PDF at ``path``."""
 
 
-def _renumber(doc: DoclingDocument, numbers: Sequence[int]) -> DoclingDocument:
+def set_options(target: object, values: Mapping[str, object]) -> None:
+    """Set dotted option paths, e.g. ``{'layout_options.create_orphan_clusters': False}``; unknown names raise."""
+    for path, value in values.items():
+        *parents, name = path.split('.')
+        owner = reduce(getattr, parents, target)
+        if not hasattr(owner, name):
+            raise AttributeError(f'{type(owner).__name__} has no option {name!r} (in {path!r})')
+        setattr(owner, name, value)
+
+
+def renumber(doc: DoclingDocument, numbers: Sequence[int]) -> DoclingDocument:
     """Map page numbers of a subset PDF back to the source, where subset page i is source page numbers[i - 1]."""
     for items in (doc.texts, doc.tables, doc.pictures, doc.key_value_items, doc.form_items):
         for item in items:
@@ -52,13 +64,12 @@ def _renumber(doc: DoclingDocument, numbers: Sequence[int]) -> DoclingDocument:
     return doc
 
 
-def _write_subset(path: Path, skip: frozenset[int], out: Path) -> list[int]:
-    """Write the pages of ``path`` not in ``skip`` to ``out`` and return their original numbers."""
+def write_subset(path: Path, skip: Collection[int], out: Path | IO[bytes]) -> list[int]:
+    """Write the pages of ``path`` not in ``skip`` to ``out`` (a path or binary stream); return their numbers."""
     reader = PdfReader(path)
     writer = PdfWriter()
     kept = [number for number in range(1, len(reader.pages) + 1) if number not in skip]
     for number in kept:
         writer.add_page(reader.pages[number - 1])
-    with open(out, 'wb') as handle:
-        writer.write(handle)
+    writer.write(out)
     return kept

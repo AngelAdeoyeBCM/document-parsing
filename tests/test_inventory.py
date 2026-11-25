@@ -52,6 +52,11 @@ def test_inventory_classifies_text_scans_and_blank_pages(tmp_path, make_pdf):
     assert (by_id['blank'].text_quality, by_id['blank'].do_ocr) == ('image_only', False)
     assert by_id['blank'].blank_pages == 2
 
+    # pypdf's own time is stored per page and per document (opening plus every page), as a speed baseline.
+    pages = inventory.pages(by_id['text'].hash_id)
+    assert all(page.pypdf_seconds > 0 for page in pages)
+    assert by_id['text'].pypdf_seconds >= sum(page.pypdf_seconds for page in pages)
+
     assert [source.doc_id for source in inventory.sources(include_ocr=False)] == ['blank', 'text']
     assert [source.doc_id for source in inventory.sources(include_ocr=True)] == ['scan']
 
@@ -187,11 +192,13 @@ def test_numbered_stratified_sample_is_deterministic(tmp_path, make_pdf):
 
 
 def test_sample_uses_kept_page_count_for_length_bands(tmp_path, make_pdf):
-    make_pdf('corpus/short.pdf', [[TEXT], [TEXT], DISCLOSURE])
-    make_pdf('corpus/long.pdf', [[TEXT] for _ in range(20)])
-    inventory = Inventory(tmp_path / 'corpus', tmp_path / 'inventory.db')
-    triage = Triage(policy='tail', keep_first=1)
-    inventory.build(triage=triage)
+    # 7 pages, 3 of them disclosures: band 1 (6-15 pages) as a whole, band 0 (up to 5) once triage drops the tail.
+    make_pdf('corpus/trimmed.pdf', [[TEXT]] * 4 + [DISCLOSURE] * 3)
+    make_pdf('corpus/short.pdf', [[TEXT]] * 3)
+    plain = Inventory(tmp_path / 'corpus', tmp_path / 'plain.db')
+    plain.build()
+    triaged = Inventory(tmp_path / 'corpus', tmp_path / 'triaged.db')
+    triaged.build(triage=Triage(policy='tail', keep_first=1))
 
-    chosen = inventory.sample(number=2, seed=3)
-    assert len(chosen) == 2
+    assert len(plain.sample(per_stratum=1)) == 2  # different bands
+    assert len(triaged.sample(per_stratum=1)) == 1  # same band after triage

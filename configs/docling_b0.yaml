@@ -1,0 +1,15 @@
+# B0: Docling's own defaults except do_ocr; the reference every Stage 1.1 experiment changes one lever from.
+# No triage, routes or postprocess, so it parses the same pages as pypdf_default (P0).
+name: docling_b0
+input:
+  directory: storage
+  manifest: data/sample.txt
+output: outputs/docling_b0
+parser:
+  name: docling
+  options:
+    device: cuda:1  # run every Stage 1.1 config on this one device so time per page is comparable
+    layout_model: layout_heron_default
+    do_ocr: false
+    images_scale: 1.0
+    picture_images: false

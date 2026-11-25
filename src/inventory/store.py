@@ -14,7 +14,7 @@ from .profiler import PageProfile, PDFProfile, ProfileResult
 from triage import PageVerdict
 
 # Bump on any schema change; an inventory with another version is dropped and rebuilt, since it is only a cache.
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3  # 3: pypdf_seconds on documents and pages
 
 _TABLES = (
     'experiment_documents',
@@ -270,7 +270,8 @@ class InventoryStore:
         with self.transaction() as connection:
             return connection.execute(
                 f'SELECT hash_id, relative_path, pages, n_triage_pages, text_quality, do_ocr '
-                f'FROM documents WHERE {clause}', params
+                f'FROM documents WHERE {clause}',
+                params,
             ).fetchall()
 
     # -- page text -----------------------------------------------------------------------------------------------

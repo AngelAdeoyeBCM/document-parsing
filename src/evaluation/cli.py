@@ -1,23 +1,18 @@
+"""Stage 1.1 evaluation: score parse runs against the annotated gold, compare them, and log them to MLflow."""
+
 from __future__ import annotations
 
 import argparse
-import json
 import logging
-import random
-from collections import Counter
-from collections.abc import Iterator, Sequence
-from dataclasses import asdict
+from collections.abc import Sequence
 from pathlib import Path
 
-from parsing.core import ParsedDocument
-from parsing.pipeline import RunManifest
-from parsing.render import ProofRenderer
+from annotation import Workspace, load_gold
+from inventory import InventoryStore
+from parsing.core import SERIALIZATIONS
 
-from .client import VlmClient
-from .evaluator import Evaluator, summarise, write_csv
-from .gold import load_gold
-from .gold import score as score_gold
-from .judge import PairwiseJudge
+from .compare import compare_runs
+from .score import DEFAULT_SERIALIZATIONS, evaluate_run, read_csv
 
 logger = logging.getLogger(__name__)
 
@@ -29,92 +24,66 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 
 def _arguments() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog='evaluation', description='Score and compare parser runs.')
+    parser = argparse.ArgumentParser(prog='evaluation', description=__doc__)
     commands = parser.add_subparsers(required=True)
 
-    score = commands.add_parser('score', help='automatic metrics for one or more run directories')
-    score.add_argument('runs', type=Path, nargs='+')
-    score.add_argument('--out', type=Path, required=True, help='per-document CSV; a _summary CSV is written beside it')
+    score = commands.add_parser('score', help='score parse runs; writes <run>/evaluation/')
+    score.add_argument('runs', type=Path, nargs='+', help='run directories, e.g. outputs/docling_b0')
+    score.add_argument('--inventory', type=Path, default=Path('storage/inventory.db'), help="the runs' inventory")
+    score.add_argument('--gold', type=Path, default=Path('data/annotation'), help='annotation workspace')
+    score.add_argument(
+        '--serialization',
+        action='append',
+        choices=sorted(set(SERIALIZATIONS) - {'extracted'}),
+        help=f'scored against gold; repeatable (default: {", ".join(DEFAULT_SERIALIZATIONS)})',
+    )
     score.set_defaults(handler=_score)
 
-    gold = commands.add_parser('gold', help='accuracy against hand-checked transcriptions, e.g. for scanned PDFs')
-    gold.add_argument('runs', type=Path, nargs='+')
-    gold.add_argument('--gold', type=Path, default=Path('data/gold'), help='<doc_id>/p<N>.txt and p<N>_table.tsv')
-    gold.add_argument('--out', type=Path, required=True)
-    gold.set_defaults(handler=_gold)
+    paired = commands.add_parser('compare', help='paired difference of a run against a base run')
+    paired.add_argument('base', type=Path, help='run directory of the current best, e.g. outputs/docling_b0')
+    paired.add_argument('other', type=Path)
+    paired.add_argument('--metric', action='append', required=True, help='pages.csv column, e.g. body.loss')
+    paired.add_argument('--split', choices=('screen', 'holdout', 'all'), default='screen')
+    paired.add_argument('--strata', type=Path, help='doc_id,page,tags CSV; adds one comparison per tag')
+    paired.add_argument('--seed', type=int, default=0)
+    paired.set_defaults(handler=_compare)
 
-    judge = commands.add_parser('judge', help='pairwise VLM judgement of two runs on sampled pages')
-    judge.add_argument('first', type=Path)
-    judge.add_argument('second', type=Path)
-    judge.add_argument('--base-url', required=True, help='OpenAI-compatible endpoint, e.g. http://localhost:8000/v1')
-    judge.add_argument('--model', required=True)
-    judge.add_argument('--documents', type=int, default=50)
-    judge.add_argument('--pages-per-document', type=int, default=2)
-    judge.add_argument('--seed', type=int, default=0)
-    judge.add_argument('--out', type=Path, required=True)
-    judge.set_defaults(handler=_judge)
-
-    proof = commands.add_parser('proof', help='(re)build the side-by-side proof HTML for an existing run')
-    proof.add_argument('run', type=Path)
-    proof.add_argument('--doc', action='append', help='doc_id to render; repeatable; default all')
-    proof.add_argument('--out', type=Path, help='default: the run directory')
-    proof.add_argument('--scale', type=float, default=1.5)
-    proof.add_argument('--zoom', type=float, default=0.5, help='page display size; 1.0 = browser PDF viewer at 100%%')
-    proof.add_argument('--overlays', action='store_true', help='also save Docling layout overlays as PNGs')
-    proof.add_argument('--reading-order', action='store_true', help='draw reading-order arrows on the overlays')
-    proof.set_defaults(handler=_proof)
+    log = commands.add_parser('log', help='log scored runs to MLflow, one MLflow run each')
+    log.add_argument('runs', type=Path, nargs='+')
+    log.add_argument('--experiment', default='stage-1.1')
+    log.set_defaults(handler=_log)
     return parser
 
 
-def _documents(run: Path) -> Iterator[ParsedDocument]:
-    return RunManifest(run).documents()
-
-
 def _score(args: argparse.Namespace) -> int:
-    evaluator = Evaluator()
-    rows = [evaluator.evaluate(document, run.name) for run in args.runs for document in _documents(run)]
-    write_csv(rows, args.out)
-    write_csv(summarise(rows), args.out.with_name(f'{args.out.stem}_summary.csv'))
-    logger.info('scored %d documents across %d runs', len(rows), len(args.runs))
+    if not args.inventory.is_file():
+        raise SystemExit(f'no inventory at {args.inventory}; pass --inventory <input directory>/inventory.db')
+    store = InventoryStore(args.inventory)
+    gold = load_gold(Workspace(args.gold))
+    logger.info('gold: %d documents from %s', len(gold), args.gold)
+    for run in args.runs:
+        serializations = args.serialization or DEFAULT_SERIALIZATIONS
+        evaluation = evaluate_run(run, store, gold, args.gold.as_posix(), serializations)
+        logger.info('%s: scored into %s', run.name, evaluation)
     return 0
 
 
-def _gold(args: argparse.Namespace) -> int:
-    rows = [
-        score_gold(document, load_gold(args.gold / document.source.doc_id), run.name)
-        for run in args.runs
-        for document in _documents(run)
-        if (args.gold / document.source.doc_id).is_dir()
-    ]
-    write_csv(rows, args.out)
-    logger.info('scored %d documents with gold pages across %d runs', len(rows), len(args.runs))
+def _compare(args: argparse.Namespace) -> int:
+    split = None if args.split == 'all' else args.split
+    path = compare_runs(args.base, args.other, args.metric, split, args.strata, args.seed)
+    for r in read_csv(path):
+        logger.info(
+            '%s [%s]: %s - %s = %+.4f (%+.4f, %+.4f) over %s documents',
+            r['metric'], r['stratum'], args.other.name, args.base.name,
+            float(r['diff']), float(r['low']), float(r['high']), r['documents'],
+        )  # fmt: skip
+    logger.info('written to %s', path)
     return 0
 
 
-def _judge(args: argparse.Namespace) -> int:
-    first = {document.source.hash_id: document for document in _documents(args.first)}
-    second = {document.source.hash_id: document for document in _documents(args.second)}
-    rng = random.Random(args.seed)
-    shared = sorted(first.keys() & second.keys())
-    judge = PairwiseJudge(VlmClient(args.base_url, args.model))
-    wins: Counter[str] = Counter()
-    args.out.parent.mkdir(parents=True, exist_ok=True)
-    with open(args.out, 'w', encoding='utf-8') as handle:
-        for key in rng.sample(shared, min(args.documents, len(shared))):
-            pages = sorted(first[key].document.pages.keys() | second[key].document.pages.keys())
-            for page in rng.sample(pages, min(args.pages_per_document, len(pages))):
-                verdict = judge.judge((args.first.name, first[key]), (args.second.name, second[key]), page)
-                wins[verdict.winner] += 1
-                handle.write(json.dumps(asdict(verdict)) + '\n')
-    logger.info('wins: %s', dict(wins))
-    return 0
+def _log(args: argparse.Namespace) -> int:
+    from .tracking import log_run
 
-
-def _proof(args: argparse.Namespace) -> int:
-    renderer = ProofRenderer(scale=args.scale, zoom=args.zoom, overlays=args.overlays, reading_order=args.reading_order)
-    out_dir = args.out or args.run
-    wanted = set(args.doc or ())
-    for parsed in _documents(args.run):
-        if not wanted or parsed.source.doc_id in wanted:
-            logger.info('%s: %s', parsed.source.doc_id, renderer.write(parsed, out_dir))
+    for run in args.runs:
+        logger.info('%s: logged as MLflow run %s', run.name, log_run(run, args.experiment))
     return 0

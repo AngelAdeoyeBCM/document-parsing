@@ -1,33 +1,16 @@
-from .client import VlmClient
-from .evaluator import Evaluator, summarise, write_csv
-from .judge import PageImager, PairwiseJudge, Verdict
-from .metrics import (
-    DEFAULT_METRICS,
-    FurnitureLeakage,
-    Hallucination,
-    Metric,
-    NumericFidelity,
-    Structure,
-    TextCoverage,
-    Throughput,
-)
-from .reference import Reference
+"""Stage 1.1 evaluation of parse runs; see ``cli.py`` for the workflow."""
+
+from .compare import compare, compare_runs
+from .metrics import dropped_text_rate, garble_rate, gold_metrics
+from .score import EVALUATION_DIR, evaluate_run, split
 
 __all__ = [
-    'DEFAULT_METRICS',
-    'Evaluator',
-    'FurnitureLeakage',
-    'Hallucination',
-    'Metric',
-    'NumericFidelity',
-    'PageImager',
-    'PairwiseJudge',
-    'Reference',
-    'Structure',
-    'TextCoverage',
-    'Throughput',
-    'Verdict',
-    'VlmClient',
-    'summarise',
-    'write_csv',
+    'EVALUATION_DIR',
+    'compare',
+    'compare_runs',
+    'dropped_text_rate',
+    'evaluate_run',
+    'garble_rate',
+    'gold_metrics',
+    'split',
 ]

@@ -2,13 +2,14 @@ from __future__ import annotations
 
 import hashlib
 import logging
-from collections.abc import Iterable
+from collections.abc import Collection, Iterable
 from dataclasses import dataclass
 from pathlib import Path
 
+from triage import Triage, run_triage
+
 from .profiler import PROFILER_VERSION, PageProfile, PDFProfile, Profiler
 from .store import InventoryStore
-from triage import Triage, run_triage
 
 logger = logging.getLogger(__name__)
 
@@ -183,6 +184,7 @@ class Inventory:
         text_quality: tuple[str, ...] | None = None,
         include_ocr: bool | None = None,
         page_bands: tuple[int, ...] = (5, 15, 40),
+        within: Collection[str] | None = None,
     ) -> list[str]:
         from .sampling import StratifiedSampler
 
@@ -192,7 +194,7 @@ class Inventory:
             per_stratum=per_stratum,
             seed=seed,
             page_bands=page_bands,
-        ).sample(text_quality=text_quality, do_ocr=include_ocr)
+        ).sample(text_quality=text_quality, do_ocr=include_ocr, within=within)
 
 
 def _manifest_paths(manifest: Path) -> list[str]:

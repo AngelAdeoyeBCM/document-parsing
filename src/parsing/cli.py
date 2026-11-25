@@ -8,7 +8,7 @@ from pathlib import Path
 from inventory import Inventory, PdfSource
 
 from .parsers import available
-from .pipeline import Pipeline, RunConfig
+from .pipeline import Pipeline, RunConfig, RunManifest
 from .pipeline.components import build_triage
 
 logger = logging.getLogger(__name__)
@@ -38,10 +38,14 @@ def _arguments() -> argparse.ArgumentParser:
     sample = commands.add_parser('sample', help='draw a manifest from a SQLite inventory')
     sample.add_argument('--directory', type=Path, required=True)
     sample.add_argument('--database', type=Path, required=True)
-    sample.add_argument('--per-stratum', type=int, default=None, help='legacy per-stratum limit; ignored when --number is set')
+    sample.add_argument(
+        '--per-stratum', type=int, default=None, help='legacy per-stratum limit; ignored when --number is set'
+    )
     sample.add_argument('--seed', type=int, default=0)
     sample.add_argument('--out', type=Path, required=True)
-    sample.add_argument('--number', '--count', dest='number', type=int, default=50, help='total number of full PDFs to sample')
+    sample.add_argument(
+        '--number', '--count', dest='number', type=int, default=50, help='total number of full PDFs to sample'
+    )
     sample.set_defaults(handler=_sample)
 
     parsers = commands.add_parser('parsers', help='list available parsers')
@@ -59,9 +63,16 @@ def _run(args: argparse.Namespace) -> int:
     index, count = (int(part) for part in args.shard.split('/'))
     inventory = Inventory(config.input.directory, config.input.directory / 'inventory.db')
     corpus = _sources(inventory, config)
+    manifest = RunManifest(config.output)
+    manifest.claim(config.settings)  # refuses a directory that holds another config's outputs
+    done = manifest.completed()
+    todo = [source for source in corpus[index::count] if source.hash_id not in done]
     pipeline = Pipeline.from_config(config, store=inventory.store)
-    done = sum(1 for _ in pipeline.run(corpus[index::count], corpus=corpus))
-    logger.info('%s: %d/%d documents parsed into %s', config.name, done, len(corpus[index::count]), config.output)
+    parsed = sum(1 for _ in pipeline.run(todo, corpus=corpus))
+    logger.info(
+        '%s: %d parsed, %d already done, %d failed, into %s',
+        config.name, parsed, len(corpus[index::count]) - len(todo), len(todo) - parsed, config.output,
+    )  # fmt: skip
     return 0
 
 

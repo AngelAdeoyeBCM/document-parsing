@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Iterator
+from collections.abc import Iterator, Mapping
 from pathlib import Path
 from types import MappingProxyType
+from typing import Any
 
 from docling_core.types.doc import DoclingDocument
+
 from inventory import PdfSource
 
 from ..core import ParsedDocument, ParserInfo
@@ -16,10 +18,28 @@ class RunManifest:
     """``run.jsonl`` in a run directory: one line per document with what Docling's JSON does not hold."""
 
     filename = 'run.jsonl'
+    settings_filename = 'settings.json'
 
     def __init__(self, run_dir: Path) -> None:
         self.run_dir = run_dir
         self.path = run_dir / self.filename
+
+    def claim(self, settings: Mapping[str, Any]) -> None:
+        """Bind the run directory to one set of parse settings, so its outputs are never a mix of two configs."""
+        path = self.run_dir / self.settings_filename
+        if path.is_file():
+            if json.loads(path.read_text(encoding='utf-8')) != settings:
+                raise ValueError(f'{self.run_dir} holds a run with other settings; give the changed config a new name')
+            return
+        self.run_dir.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(settings, indent=1), encoding='utf-8')
+
+    def completed(self) -> set[str]:
+        """Content hashes of the documents already parsed here, so a re-run only does what is missing."""
+        if not self.path.is_file():
+            return set()
+        with open(self.path, encoding='utf-8') as handle:
+            return {record['hash_id'] for record in map(json.loads, handle) if record['status'] == 'ok'}
 
     def record_ok(self, item: WorkItem) -> None:
         document = item.require_document()

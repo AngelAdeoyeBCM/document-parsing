@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import random
 from collections import defaultdict
-from collections.abc import Iterable
+from collections.abc import Collection, Iterable
 
 from .store import InventoryStore
 
@@ -34,9 +34,13 @@ class StratifiedSampler:
         *,
         text_quality: Iterable[str] | None = None,
         do_ocr: bool | None = None,
+        within: Collection[str] | None = None,
     ) -> list[str]:
+        """Relative paths of the chosen documents; ``within`` limits the draw to these relative paths."""
         groups: dict[tuple[str, int, bool], list[tuple[str, str, int]]] = defaultdict(list)
         for hash_id, relative_path, pages, triaged, quality, ocr in self.store.sampling_rows(text_quality, do_ocr):
+            if within is not None and relative_path not in within:
+                continue
             kept_pages = max(0, pages - (triaged or 0))
             band = next(
                 (index for index, upper in enumerate(self.page_bands) if kept_pages <= upper),
@@ -47,7 +51,6 @@ class StratifiedSampler:
         if not groups:
             return []
 
-        rng = random.Random(self.seed)
         chosen: set[str] = set()
 
         if self.number is not None:
@@ -66,10 +69,7 @@ class StratifiedSampler:
                 if not advanced:
                     break
         else:
-            quotas = {
-                key: min(self.per_stratum, len(members))
-                for key, members in groups.items()
-            }
+            quotas = {key: min(self.per_stratum, len(members)) for key, members in groups.items()}
 
         for key in sorted(groups):
             quota = quotas[key]
@@ -92,7 +92,7 @@ class StratifiedSampler:
             for index in range(quota):
                 start = int(index * width)
                 end = max(start + 1, int((index + 1) * width))
-                segment = members[start:min(end, len(members))]
+                segment = members[start : min(end, len(members))]
                 chosen.add(stratum_rng.choice(segment)[1])
 
         return sorted(chosen)

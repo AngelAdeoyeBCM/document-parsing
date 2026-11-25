@@ -3,8 +3,12 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from evaluation import Evaluator, summarise
+import pytest
+
+from evaluation import evaluate_run
+from evaluation.score import read_csv
 from inventory import Inventory
+from parsing.cli import main
 from parsing.pipeline import Pipeline, RunConfig, RunManifest, stages
 from parsing.pipeline.components import build_triage
 
@@ -47,10 +51,27 @@ def test_pipeline_skips_boilerplate_and_writes_outputs(tmp_path: Path, make_pdf)
     assert document.source.relative_path == 'bnp/note.pdf'
     proof = (config.output / 'note.html').read_text()
     assert proof.count('class="page"') == 3 and 'skipped by triage' in proof
-    row = Evaluator().evaluate(document, 'test')
-    assert row['coverage.word_recall'] == 1.0
-    assert row['numbers.number_recall'] == 1.0
-    assert summarise([row])[0]['documents'] == 1
+
+    truth = document.document.model_copy(deep=True)
+    truth.pages = {1: truth.pages[1]}  # ground truth holds only the annotated pages
+    evaluation = evaluate_run(config.output, inventory.store, {'note': (document.source.hash_id, truth)})
+    pages = {row['page']: row for row in read_csv(evaluation / 'pages.csv')}
+    assert sorted(pages) == ['1', '2']  # page 3 was triaged away
+    assert float(pages['1']['extracted.dropped_text_rate']) == 0.0  # pypdf against its own stored text
+    assert float(pages['1']['extracted.garble_rate.text']) == 0.0  # pypdf output is one text item per page
+    assert float(pages['1']['pypdf_seconds_per_page']) > 0  # the inventory's pypdf time, for comparison
+    assert float(pages['1']['body.loss']) == 0.0 and pages['2']['body.loss'] == ''  # page 2 not annotated
+    params = json.loads((evaluation / 'params.json').read_text())
+    assert (params['parser'], params['documents'], params['gold_pages']) == ('pypdf', 1, 1)
+    assert json.loads((evaluation / 'metrics.json').read_text())['body.loss'] == 0.0
+
+    markdown = evaluate_run(
+        config.output, inventory.store, {'note': (document.source.hash_id, truth)}, serializations=['markdown']
+    )
+    assert float(read_csv(markdown / 'pages.csv')[0]['markdown.loss']) == 0.0  # any named serialization, gold alike
+
+    other_file = evaluate_run(config.output, inventory.store, {'note': ('not this file', truth)})
+    assert json.loads((other_file / 'params.json').read_text())['gold_pages'] == 0  # gold from another file
 
 
 def test_pipeline_reuses_inventory_text_and_triage(tmp_path: Path, make_pdf, monkeypatch) -> None:
@@ -101,12 +122,28 @@ def test_image_only_documents_take_the_override_route(tmp_path: Path, make_pdf) 
     )
     inventory = Inventory(tmp_path / 'raw', tmp_path / 'inventory.db')
     inventory.build()
-    items = {
-        item.source.doc_id: item
-        for item in Pipeline.from_config(config).run(inventory.sources())
-    }
+    items = {item.source.doc_id: item for item in Pipeline.from_config(config).run(inventory.sources())}
     assert items['text'].route == 'default'
     assert items['scan'].route == 'image_only'
     assert items['scan'].require_document().parser.config['extraction_mode'] == 'layout'
     routes = {json.loads(line)['doc_id']: json.loads(line)['route'] for line in (config.output / 'run.jsonl').open()}
     assert routes == {'text': 'default', 'scan': 'image_only'}
+
+
+def test_run_resumes_and_refuses_changed_settings_in_the_same_directory(tmp_path: Path, make_pdf) -> None:
+    make_pdf('raw/bnp/note.pdf', [['Copper outlook 2025']])
+    make_pdf('raw/bnp/other.pdf', [['Gold outlook 2026']])
+    config = tmp_path / 'run.yaml'
+    settings = {'name': 'p0', 'input': {'directory': str(tmp_path / 'raw')}, 'output': str(tmp_path / 'out')}
+    config.write_text(json.dumps(settings | {'parser': {'name': 'pypdf'}}))  # JSON is valid YAML
+    log = tmp_path / 'out' / 'run.jsonl'
+
+    assert main(['run', str(config)]) == 0
+    assert len(log.read_text().splitlines()) == 2
+    assert main(['run', str(config)]) == 0  # resumes: both documents are already parsed
+    assert len(log.read_text().splitlines()) == 2
+
+    changed = settings | {'parser': {'name': 'pypdf', 'options': {'extraction_mode': 'layout'}}}
+    config.write_text(json.dumps(changed))
+    with pytest.raises(ValueError, match='other settings'):
+        main(['run', str(config)])

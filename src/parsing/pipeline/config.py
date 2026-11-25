@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+import json
 from collections.abc import Mapping
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -58,6 +59,17 @@ class RunConfig:
     routes: tuple[RouteSpec, ...] = ()
     postprocess: tuple[ComponentSpec, ...] = ()
     renderers: tuple[ComponentSpec, ...] = DEFAULT_RENDERERS
+
+    @property
+    def settings(self) -> dict[str, Any]:
+        """What decides the parsed output (not the input or the renderers), as plain JSON values."""
+        settings = {
+            'parser': asdict(self.parser),
+            'triage': asdict(self.triage) if self.triage else None,
+            'routes': [asdict(route) for route in self.routes],
+            'postprocess': [asdict(spec) for spec in self.postprocess],
+        }
+        return json.loads(json.dumps(settings, default=str))
 
     @classmethod
     def load(cls, path: Path) -> RunConfig:

@@ -96,7 +96,7 @@ class ParseStage(Stage):
         self.parsers = dict(parsers)
 
     def run(self, item: WorkItem) -> WorkItem:
-        return replace(item, document=self.parsers[item.route].parse(item.source, item.skip))
+        return replace(item, document=self.parsers[item.route].parse(item.source, item.skip, item.page_texts))
 
 
 class PostprocessStage(Stage):

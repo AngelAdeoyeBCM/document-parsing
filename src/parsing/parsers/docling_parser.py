@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from dataclasses import dataclass
+from collections.abc import Mapping
+from dataclasses import dataclass, field
 from functools import cached_property
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 from docling.backend.docling_parse_backend import ThreadedDoclingParseDocumentBackend
 from docling.backend.pypdfium2_backend import PyPdfiumDocumentBackend
@@ -31,7 +32,7 @@ from docling.document_converter import DocumentConverter, PdfFormatOption
 from docling.pipeline.vlm_pipeline import VlmPipeline
 from docling_core.types.doc import DoclingDocument
 
-from .model import ModelConfig, ModelParser
+from .model import ModelConfig, ModelParser, set_options
 
 _BACKENDS = {'docling_parse': ThreadedDoclingParseDocumentBackend, 'pypdfium2': PyPdfiumDocumentBackend}
 _OCR_ENGINES = {
@@ -106,6 +107,8 @@ class DoclingStandardConfig(DoclingConfig):
         'Describe this figure from a financial research report: chart type, what is plotted, units, '
         'period covered and the main takeaway. At most 100 words, only what is visible.'
     )
+    # Any other PdfPipelineOptions setting by dotted path, applied last, e.g. {'do_table_structure': False}
+    overrides: Mapping[str, Any] = field(default_factory=dict)
 
 
 class DoclingStandardParser(DoclingParser):
@@ -149,6 +152,7 @@ class DoclingStandardParser(DoclingParser):
             options.picture_description_options = PictureDescriptionApiOptions(
                 url=c.describe_url, params={'model': c.describe_model}, prompt=c.describe_prompt
             )
+        set_options(options, c.overrides)
         return PdfFormatOption(pipeline_options=options, backend=self._backend)
 
 
