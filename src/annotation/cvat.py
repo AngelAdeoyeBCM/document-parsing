@@ -46,7 +46,10 @@ def collect(workspace: Workspace) -> Path:
 def _docling_eval(*args: object) -> None:
     executable = shutil.which('docling-eval')
     if executable is None:
-        raise SystemExit('docling-eval is not installed; install the annotation extra: uv sync --extra annotation')
+        raise SystemExit(
+            'docling-eval is not installed; install it as a tool (its own environment, as it needs Pillow below 12): '
+            'uv tool install "docling-eval[cvat_tools]"'
+        )
     logger.info('docling-eval %s', ' '.join(map(str, args)))
     subprocess.run([executable, *map(str, args)], check=True)
 

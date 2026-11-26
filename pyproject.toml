@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "PDF parsing and evaluation for the RAG ingestion pipeline"
 requires-python = ">=3.11"
 dependencies = [
-    "pillow>=10",
+    "pillow>=12",  # Nexus quarantines every Pillow below 12
     "pypdf>=5",
     "pypdfium2>=4.30",
     "pyyaml>=6",
@@ -13,8 +13,9 @@ dependencies = [
 
 [project.optional-dependencies]
 docling = ["docling[rapidocr,easyocr,tesserocr]>=2.153"]
-annotation = ["docling-eval[cvat_tools]", "pyarrow"]  # `annotation prepare` and `collect` run docling-eval
-gold = ["pyarrow"]  # `evaluation score` reads the ground truth
+# `annotation prepare` and `collect` run the docling-eval command, installed as a separate tool, not in this environment:
+# its docling-cvat-tools needs Pillow below 12 (uv tool install "docling-eval[cvat_tools]").
+gold = ["pyarrow"]  # `evaluation score` and `experiments log` read the ground truth
 tracking = ["mlflow"]  # only `experiments log` sends results to MLflow
 
 [project.scripts]

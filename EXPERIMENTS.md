@@ -53,14 +53,44 @@ mlflow.db, mlruns/             the MLflow store
 
 ## 1. Setup
 
-Install the project with every extra: Docling for parsing, docling-eval for annotation, MLflow for tracking.
+Parsing runs on the Linux GPU box; annotation and review can run anywhere that has the dataset folder. Every
+command below runs from the repository root.
+
+### First time on a Linux machine
+
+uv installs itself to `~/.local/bin`, which may not be on your `PATH`, and it needs the system certificates to
+trust the internal Nexus server. Set both once, for every future shell:
+
+```bash
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc && echo 'export UV_SYSTEM_CERTS=true' >> ~/.bashrc
+```
+
+```bash
+source ~/.bashrc
+```
+
+### The project
+
+Install the project with every extra: Docling for parsing, pyarrow for reading the gold, MLflow for tracking.
 
 ```bash
 uv sync --all-extras
 ```
 
-Parsing runs on the Linux GPU box; annotation and review can run anywhere that has the dataset folder. Every
-command below runs from the repository root.
+### docling-eval, for preparing and collecting annotation
+
+`annotation prepare` and `annotation collect` run the `docling-eval` command. It is installed as a separate uv
+tool, with its own environment, because its CVAT tools need Pillow below 12, and the project uses Pillow 12 or
+later:
+
+```bash
+uv tool install "docling-eval[cvat_tools]"
+```
+
+> **Blocked on Nexus for now.** Nexus quarantines every Pillow below 12, so this install fails on machines that
+> use it, until Pillow 11.3.0 is released from quarantine or docling-cvat-tools accepts Pillow 12. Only these two
+> annotation commands need docling-eval: parsing, scoring and MLflow are unaffected, and CVAT itself runs
+> elsewhere.
 
 ## 2. Build the inventory
 
@@ -412,7 +442,9 @@ Without the file, comparisons are over all pages only, and `experiments log` say
 | `no inventory at storage/inventory.db` | Build it (section 2), or pass `--inventory` |
 | `... already holds a dataset` | Use a new `--out` folder, or move the old dataset (section 3) |
 | `no dataset in data/annotation` | Run `pipeline dataset` before `annotation prepare` |
-| `docling-eval is not installed` | `uv sync --all-extras` |
+| `uv: command not found` | `~/.local/bin` is not on your `PATH` (section 1) |
+| Certificate error downloading from Nexus | Set `UV_SYSTEM_CERTS=true`, or pass `--system-certs` (section 1) |
+| `docling-eval is not installed` | `uv tool install "docling-eval[cvat_tools]"` (section 1) |
 | `no CVAT export in .../zips` | Export at least one task's zip into `cvat/cvat_annotations/zips/` |
 | `document ... appears twice` (scoring) | An earlier collect left files behind: delete `data/annotation/gold/` and run `annotation collect` again |
 | `no GPU has 50% of its memory free` | Wait, lower `--min-free`, or pass `--gpus` |
