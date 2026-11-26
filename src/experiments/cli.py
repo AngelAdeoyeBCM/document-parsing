@@ -22,8 +22,7 @@ from queue import Empty, SimpleQueue
 
 import yaml
 
-from parsing.gpus import free_gpus
-
+from .device import free_gpus
 from .spec import Spec
 
 logger = logging.getLogger(__name__)

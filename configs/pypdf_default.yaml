@@ -1,7 +1,7 @@
 name: pypdf_default
 input:
   directory: storage
-  manifest: data/sample.txt
+  manifest: data/annotation/manifest.txt  # the dataset `pipeline dataset` writes; gold is annotated on the same documents
 output: outputs/pypdf_default
 parser:
   name: pypdf

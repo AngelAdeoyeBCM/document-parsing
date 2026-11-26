@@ -1,8 +1,10 @@
-"""Which GPUs have room, asked when a run starts so configs need not pin a device."""
+"""Which GPUs have room, so `experiments run` can spread runs over them and configs need not pin a device.
+
+Each run is started with ``CUDA_VISIBLE_DEVICES`` set to its GPU, so the parser's ``device: auto`` lands on it.
+"""
 
 from __future__ import annotations
 
-import os
 import subprocess
 
 
@@ -22,19 +24,3 @@ def free_gpus(min_free: float = 0.5) -> list[int]:
     memory = gpu_memory()
     roomy = [index for index, (free, total) in memory.items() if free >= min_free * total]
     return sorted(roomy, key=lambda index: -memory[index][0])
-
-
-def auto_device() -> str:
-    """``cuda:N`` for the visible GPU with the most free memory; ``auto`` (Docling decides) when that is unknown."""
-    os.environ.setdefault('CUDA_DEVICE_ORDER', 'PCI_BUS_ID')  # so CUDA numbers GPUs as nvidia-smi does
-    memory = gpu_memory()
-    visible = os.environ.get('CUDA_VISIBLE_DEVICES')
-    if visible is not None:
-        try:
-            order = [int(index) for index in visible.split(',') if index.strip()]
-        except ValueError:  # UUIDs or MIG ids
-            return 'auto'
-        memory = {order.index(index): room for index, room in memory.items() if index in order}
-    if not memory:
-        return 'auto'
-    return f'cuda:{max(memory, key=lambda index: memory[index][0])}'

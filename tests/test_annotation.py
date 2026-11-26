@@ -4,57 +4,30 @@ import json
 from pathlib import Path
 
 import pytest
-from conftest import DISCLOSURE
 from docling_core.types.doc import BoundingBox, DocItemLabel, DoclingDocument, ProvenanceItem, Size
-from pypdf import PdfReader
 
 import annotation.cvat as cvat_module
-from annotation import Workspace, collect, export_documents, load_gold, prepare
-from inventory.inventory import file_hash
+from annotation import Workspace, collect, load_gold, prepare
 from parsing.core import serialize
-from pipeline import RunConfig
-
-TEXT = 'Enough meaningful text on this page to count as an embedded text layer, well past fifty characters'
 
 
-def _config(tmp_path: Path, make_pdf) -> RunConfig:
-    make_pdf('raw/bnp/note.pdf', [[TEXT], [TEXT], [TEXT], DISCLOSURE, DISCLOSURE])
-    make_pdf('raw/bnp/short.pdf', [[TEXT]])
-    make_pdf('raw/ss/scan.pdf', [[], []])  # no text layer: never sampled
-    make_pdf('raw/bnp/unlisted.pdf', [[TEXT]])  # not in the manifest: never sampled
-    manifest = tmp_path / 'sample.txt'
-    manifest.write_text('bnp/note.pdf\nbnp/short.pdf\nss/scan.pdf\n')
-    return RunConfig.from_dict(
-        {
-            'name': 'b0',
-            'input': {'directory': str(tmp_path / 'raw'), 'manifest': str(manifest)},
-            'output': str(tmp_path / 'out'),
-            'parser': {'name': 'pypdf'},
-            'triage': {'keep_first': 1, 'min_share': 0.3},
-        }
-    )
+def _documents(pages: list[int] | None = None) -> dict[str, dict]:
+    """A dataset's documents.json with one document, as `pipeline dataset` writes it."""
+    entry = {
+        'source': 'bnp/note.pdf',
+        'pages': pages or [1, 2],
+        'skipped': [3],
+        'stratum': {'length': 'short', 'density': 'typical', 'imagery': 'text'},
+        'truncated_hash': 'truncated-hash',
+    }
+    return {'source-hash': entry}
 
 
-def test_export_documents_samples_and_truncates(tmp_path: Path, make_pdf) -> None:
-    workspace = Workspace(tmp_path / 'ws')
-    documents = export_documents(_config(tmp_path, make_pdf), workspace, number=10)
-
-    assert sorted(documents) == ['note', 'short']
-    note = documents['note']
-    assert note['pages'] == [1, 2, 3]  # the disclosure tail is gone
-    assert len(PdfReader(workspace.sources / 'note.pdf').pages) == 3
-    assert note['hash_id'] == file_hash(tmp_path / 'raw/bnp/note.pdf')
-    assert note['subset_hash'] == file_hash(workspace.sources / 'note.pdf')
-    assert workspace.documents() == documents
-    with pytest.raises(FileExistsError):
-        export_documents(_config(tmp_path, make_pdf), workspace, number=10)  # never resample a workspace in use
-
-
-def test_prepare_and_collect_run_docling_eval_in_order(tmp_path: Path, make_pdf, monkeypatch) -> None:
+def test_prepare_needs_a_dataset_and_runs_docling_eval_in_order(tmp_path: Path, monkeypatch) -> None:
     workspace = Workspace(tmp_path / 'ws')
     outputs = {
-        'PlainFiles': workspace.dataset / 'gt_dataset/test',
-        'Docling': workspace.dataset / 'eval_dataset/test',
+        'PlainFiles': workspace.docling_eval / 'gt_dataset/test',
+        'Docling': workspace.docling_eval / 'eval_dataset/test',
         'CVAT': workspace.gold / 'gt_dataset/test',
     }
     calls: list[list[str]] = []
@@ -67,9 +40,15 @@ def test_prepare_and_collect_run_docling_eval_in_order(tmp_path: Path, make_pdf,
                 (directory / 'shard_000000_000000.parquet').touch()
 
     monkeypatch.setattr(cvat_module, '_docling_eval', fake_docling_eval)
-    prepare(_config(tmp_path, make_pdf), workspace, number=10)
+    with pytest.raises(FileNotFoundError, match='pipeline dataset'):
+        prepare(workspace)  # no dataset built in this folder yet
+    assert calls == []
+
+    workspace.root.mkdir()
+    workspace.documents_file.write_text(json.dumps(_documents()))
+    prepare(workspace)
     assert [call[0] for call in calls] == ['create-gt', 'create-eval', 'create-cvat']
-    assert calls[0][calls[0].index('--dataset-source') + 1] == str(workspace.sources)
+    assert calls[0][calls[0].index('--dataset-source') + 1] == str(workspace.pdfs)  # the flat folder of PDFs
     assert calls[2][calls[2].index('--gt-dir') + 1] == str(outputs['Docling'])  # the folder holding the parquet
     assert calls[2][-2:] == ['--sliding-window', '1']
 
@@ -81,16 +60,13 @@ def test_prepare_and_collect_run_docling_eval_in_order(tmp_path: Path, make_pdf,
     assert calls[-1][:3] == ['create-gt', '--benchmark', 'CVAT']
 
 
-def test_load_gold_keeps_source_page_numbers_and_matches_by_hash(tmp_path: Path) -> None:
+def test_load_gold_is_keyed_by_the_source_hash_and_keeps_its_page_numbers(tmp_path: Path) -> None:
     pa, pq = pytest.importorskip('pyarrow'), pytest.importorskip('pyarrow.parquet')
     workspace = Workspace(tmp_path / 'ws')
     workspace.root.mkdir()
-    documents = {
-        'note': {'source': 'bnp/note.pdf', 'hash_id': 'source-hash', 'subset_hash': 'subset-hash', 'pages': [1, 2]}
-    }
-    workspace.documents_file.write_text(json.dumps(documents))
+    workspace.documents_file.write_text(json.dumps(_documents()))
 
-    truth = DoclingDocument(name='subset-hash')
+    truth = DoclingDocument(name='source-hash')
     truth.add_page(page_no=2, size=Size(width=100, height=100))  # a tail-truncated copy keeps the source's numbers
     truth.add_text(DocItemLabel.TEXT, 'Prices rose.', prov=ProvenanceItem(
         page_no=2, bbox=BoundingBox(l=0, t=10, r=10, b=0), charspan=(0, 1)
@@ -106,18 +82,18 @@ def test_load_gold_keeps_source_page_numbers_and_matches_by_hash(tmp_path: Path)
         }
         pq.write_table(pa.table(records), path)
 
-    shard('shard_000000_000000.parquet', ['subset-hash', 'unknown'])  # named by hash; one record matches nothing
-    [(doc_id, (source_hash, document))] = load_gold(workspace).items()
-    assert (doc_id, source_hash, list(document.pages)) == ('note', 'source-hash', [2])
+    shard('shard_000000_000000.parquet', ['source-hash', 'unknown'])  # named by file stem; one matches nothing
+    [(hash_id, document)] = load_gold(workspace).items()
+    assert (hash_id, list(document.pages)) == ('source-hash', [2])
     assert serialize(document, 'body') == {2: 'Prices rose.'}
 
-    shard('shard_000000_000001.parquet', ['note'])
-    with pytest.raises(ValueError, match='twice'):
+    shard('shard_000000_000001.parquet', ['truncated-hash'])  # named by the truncated file's content hash
+    with pytest.raises(ValueError, match='twice'):  # ... which is the same document
         load_gold(workspace)
+    (workspace.gold / 'gt_dataset/test/shard_000000_000000.parquet').unlink()
+    assert list(load_gold(workspace)) == ['source-hash']
     assert load_gold(Workspace(tmp_path / 'empty')) == {}
 
-    (workspace.gold / 'gt_dataset/test/shard_000000_000001.parquet').unlink()
-    documents['note']['pages'] = [1, 3, 4]  # not the leading pages: numbering would no longer match the source
-    workspace.documents_file.write_text(json.dumps(documents))
+    workspace.documents_file.write_text(json.dumps(_documents(pages=[1, 3, 4])))  # not the leading pages
     with pytest.raises(ValueError, match='not the leading pages'):
         load_gold(workspace)

@@ -164,3 +164,13 @@ def test_log_experiment_to_mlflow(spec_path: Path, tmp_path: Path, monkeypatch) 
     artifacts = {item.path for item in client.list_artifacts(runs['pypdfium2'].info.run_id)}
     assert {'evaluation', 'config.yaml', 'comparison.json'} <= artifacts
     assert mlflow.get_experiment_by_name('stage-1.1/00 overview') is not None
+
+
+def test_free_gpus_are_those_with_room_most_free_first(monkeypatch) -> None:
+    from experiments import device
+
+    monkeypatch.setattr(device, 'gpu_memory', lambda: {0: (100, 400), 1: (300, 400), 2: (250, 400)})
+    assert device.free_gpus(min_free=0.5) == [1, 2]  # GPU 0 is three-quarters full
+    assert device.free_gpus(min_free=0.2) == [1, 2, 0]
+    monkeypatch.setattr(device, 'gpu_memory', dict)  # no nvidia-smi
+    assert device.free_gpus() == []

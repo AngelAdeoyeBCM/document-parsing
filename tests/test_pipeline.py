@@ -13,6 +13,7 @@ from parsing.core import serialize_document
 from parsing.parsers import get_parser
 from pipeline import DEFAULT_ROUTE, ParseStage, Pipeline, RunConfig, RunManifest, WorkItem
 from pipeline.cli import main
+from triage import Triage
 
 
 def _config(tmp_path: Path) -> RunConfig:
@@ -47,7 +48,7 @@ def test_pipeline_writes_outputs_and_scores(tmp_path: Path, make_pdf) -> None:
 
     truth = document.document.model_copy(deep=True)
     truth.pages = {1: truth.pages[1]}  # ground truth holds only the annotated pages
-    evaluation = evaluate_run(config.output, inventory.store, {'note': (document.source.hash_id, truth)})
+    evaluation = evaluate_run(config.output, inventory.store, {document.source.hash_id: truth})
     pages = {row['page']: row for row in read_csv(evaluation / 'pages.csv')}
     assert sorted(pages) == ['1', '2', '3']
     assert float(pages['1']['extracted.dropped_text_rate']) == 0.0  # pypdf against its own stored text
@@ -59,11 +60,11 @@ def test_pipeline_writes_outputs_and_scores(tmp_path: Path, make_pdf) -> None:
     assert json.loads((evaluation / 'metrics.json').read_text())['body.loss'] == 0.0
 
     markdown = evaluate_run(
-        config.output, inventory.store, {'note': (document.source.hash_id, truth)}, serializations=['markdown']
+        config.output, inventory.store, {document.source.hash_id: truth}, serializations=['markdown']
     )
     assert float(read_csv(markdown / 'pages.csv')[0]['markdown.loss']) == 0.0  # any named serialization, gold alike
 
-    other_file = evaluate_run(config.output, inventory.store, {'note': ('not this file', truth)})
+    other_file = evaluate_run(config.output, inventory.store, {'another file': truth})
     assert json.loads((other_file / 'params.json').read_text())['gold_pages'] == 0  # gold from another file
 
 
@@ -196,3 +197,17 @@ def test_device_is_not_a_setting() -> None:
     raw = {'name': 'b0', 'input': {'directory': 'storage'}, 'output': 'out', 'parser': {'name': 'docling'}}
     pinned = raw | {'parser': {'name': 'docling', 'options': {'device': 'cuda:2'}}}
     assert RunConfig.from_dict(pinned).settings == RunConfig.from_dict(raw).settings
+
+
+def test_dataset_command_writes_the_annotation_dataset(tmp_path: Path, make_pdf, caplog) -> None:
+    caplog.set_level('INFO', logger='pipeline')
+    make_pdf('raw/bnp/note.pdf', [['Copper outlook 2025 ' * 5]] * 3 + [DISCLOSURE, DISCLOSURE])
+    make_pdf('raw/bnp/other.pdf', [['Gold outlook 2026 ' * 5]])
+    Inventory(tmp_path / 'raw', tmp_path / 'inventory.db').build(triage=Triage(keep_first=1))
+
+    out = tmp_path / 'annotation'
+    args = ['dataset', '--directory', str(tmp_path / 'raw'), '--database', str(tmp_path / 'inventory.db')]
+    assert main([*args, '--number', '5', '--out', str(out)]) == 0
+    assert sorted(path.suffix for path in (out / 'pdfs').iterdir()) == ['.pdf', '.pdf']
+    assert (out / 'manifest.txt').read_text().splitlines() == ['bnp/note.pdf', 'bnp/other.pdf']
+    assert 'dataset of 2 documents' in caplog.text and 'length' in caplog.text  # the strata it covers

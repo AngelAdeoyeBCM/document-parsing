@@ -16,7 +16,6 @@ from __future__ import annotations
 
 import csv
 import json
-import logging
 import math
 import statistics
 from collections.abc import Iterable, Mapping, Sequence
@@ -29,8 +28,6 @@ from parsing.core import serialize, serialize_elements
 from pipeline import RunManifest
 
 from .metrics import CONFUSION_GROUPS, dropped_text_rate, garble_rate, gold_metrics, label_confusions, layout_f1
-
-logger = logging.getLogger(__name__)
 
 EVALUATION_DIR = 'evaluation'
 HOLDOUT_SHARE = 0.2  # documents held out of screening (E1-E7) until validation (E8)
@@ -54,7 +51,8 @@ def evaluate_run(
 ) -> Path:
     """Score every parsed page of the run and write ``<run dir>/evaluation``; returns that directory.
 
-    ``gold`` is ``annotation.load_gold``'s result; the pages a gold document holds are scored under each of
+    ``gold`` is ``annotation.load_gold``'s result, keyed by the source PDF's hash_id; the pages a gold document holds
+    are scored under each of
     ``serializations``, run and gold serialized alike.
     """
     names = tuple(dict.fromkeys(('extracted', 'body', *serializations)))  # 'body' for the layout confusions
@@ -68,7 +66,7 @@ def evaluate_run(
             raise ValueError(f'{source.doc_id}: no stored text layer; is this the inventory the run used?')
         text = {name: serialize(parsed.document, name) for name in names}
         elements = serialize_elements(parsed.document)
-        truth = _gold_text(gold, source.doc_id, source.hash_id, names)
+        truth = _gold_text(gold, source.hash_id, names)
         seconds = parsed.seconds / max(1, len(parsed.page_numbers))
         pypdf = {page.page_number: page.pypdf_seconds for page in store.pages(source.hash_id)}
         numbers = parsed.page_numbers
@@ -150,13 +148,10 @@ def write_csv(rows: list[Row], path: Path) -> None:
         writer.writerows(rows)
 
 
-def _gold_text(gold: Mapping[str, Gold], doc_id: str, hash_id: str, names: Sequence[str]) -> dict[str, Any] | None:
-    """The gold document under each serialization, with its annotated pages; None if it has no usable gold."""
-    if doc_id not in gold:
-        return None
-    source_hash, document = gold[doc_id]
-    if source_hash != hash_id:
-        logger.warning('%s: gold was annotated on a different file; its pages are not scored', doc_id)
+def _gold_text(gold: Mapping[str, Gold], hash_id: str, names: Sequence[str]) -> dict[str, Any] | None:
+    """The gold document of this content under each serialization, with its annotated pages; None if it has none."""
+    document = gold.get(hash_id)
+    if document is None:
         return None
     return {
         'pages': set(document.pages),

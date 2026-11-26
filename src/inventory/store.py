@@ -366,3 +366,12 @@ class InventoryStore:
             tuple(PageVerdict(page, bool(boilerplate), score, reason) for page, boilerplate, score, reason in verdicts),
             frozenset(json.loads(row[0])),
         )
+
+    def skip_pages(self, hash_id: str) -> frozenset[int]:
+        """The pages the stored triage skips, whatever its settings; none if the document was never triaged.
+
+        The sampler measures documents over the pages this leaves, so a dataset truncated with it matches its strata.
+        """
+        with self.transaction() as connection:
+            row = connection.execute('SELECT skip_pages FROM documents WHERE hash_id=?', (hash_id,)).fetchone()
+        return frozenset(json.loads(row[0])) if row and row[0] else frozenset()

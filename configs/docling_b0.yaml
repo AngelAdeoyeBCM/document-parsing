@@ -3,7 +3,7 @@
 name: docling_b0
 input:
   directory: storage
-  manifest: data/sample.txt
+  manifest: data/annotation/manifest.txt  # the dataset `pipeline dataset` writes; gold is annotated on the same documents
 output: outputs/docling_b0
 parser:
   name: docling

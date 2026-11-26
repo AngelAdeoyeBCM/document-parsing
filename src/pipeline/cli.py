@@ -3,10 +3,10 @@ from __future__ import annotations
 import argparse
 import logging
 from collections import Counter
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from pathlib import Path
 
-from inventory import Inventory, PdfSource, StratifiedSampler, Stratum
+from inventory import Inventory, PdfSource, StratifiedSampler, Stratum, build_dataset
 from parsing.core import SERIALIZATIONS, serialize_document
 from parsing.parsers import available
 
@@ -54,6 +54,25 @@ def _arguments() -> argparse.ArgumentParser:
         help='scanned documents that need OCR: sample them too, never, or only them',
     )
     sample.set_defaults(handler=_sample)
+
+    dataset = commands.add_parser(
+        'dataset', help='sample over the strata and write the PDFs without their triaged tail, for annotation'
+    )
+    dataset.add_argument('--directory', type=Path, required=True, help='the inventoried corpus')
+    dataset.add_argument('--database', type=Path, required=True, help='its inventory, built with triage')
+    dataset.add_argument('--number', type=int, required=True, help='documents to sample')
+    dataset.add_argument('--seed', type=int, default=0)
+    dataset.add_argument(
+        '--ocr', choices=('include', 'exclude', 'only'), default='exclude', help='scanned documents that need OCR'
+    )
+    dataset.add_argument(
+        '--text-quality',
+        action='append',
+        choices=('embedded_text', 'mixed', 'image_only'),
+        help='text layers to sample; repeatable (default: embedded_text)',
+    )
+    dataset.add_argument('--out', type=Path, default=Path('data/annotation'), help='the dataset folder')
+    dataset.set_defaults(handler=_dataset)
 
     parsers = commands.add_parser('parsers', help='list available parsers')
     parsers.set_defaults(handler=_parsers)
@@ -143,12 +162,27 @@ def _sample(args: argparse.Namespace) -> int:
     args.out.write_text(''.join(f'{relative_path}\n' for relative_path in chosen), encoding='utf-8')
     groups = sampler.strata(do_ocr=do_ocr, within=set(chosen))
     logger.info('wrote %d documents from %d strata to %s', len(chosen), len(groups), args.out)
-    for axis, name in enumerate(Stratum._fields):
-        counts = Counter({stratum[axis]: 0 for stratum in groups})
-        for stratum, members in groups.items():
-            counts[stratum[axis]] += len(members)
-        logger.info('  %-8s %s', name, ', '.join(f'{level} {count}' for level, count in sorted(counts.items())))
+    _log_strata(stratum for stratum, members in groups.items() for _ in members)
     return 0
+
+
+def _dataset(args: argparse.Namespace) -> int:
+    inventory = Inventory(args.directory, args.database)
+    do_ocr = {'include': None, 'exclude': False, 'only': True}[args.ocr]
+    text_quality = args.text_quality or ['embedded_text']
+    dataset = build_dataset(inventory, args.out, args.number, seed=args.seed, text_quality=text_quality, do_ocr=do_ocr)
+    strata = [Stratum(**document['stratum']) for document in dataset.documents().values()]
+    logger.info('dataset of %d documents from %d strata in %s', len(strata), len(set(strata)), args.out)
+    _log_strata(strata)
+    return 0
+
+
+def _log_strata(strata: Iterable[Stratum]) -> None:
+    """How many of the documents fall in each level of each stratum axis."""
+    strata = list(strata)
+    for axis, name in enumerate(Stratum._fields):
+        counts = Counter(stratum[axis] for stratum in strata)
+        logger.info('  %-8s %s', name, ', '.join(f'{level} {count}' for level, count in sorted(counts.items())))
 
 
 def _sources(inventory: Inventory, config: RunConfig) -> list[PdfSource]:
