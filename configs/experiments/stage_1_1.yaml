@@ -2,19 +2,25 @@
 #   uv run python -m experiments configs configs/experiments/stage_1_1.yaml E1   # write run configs
 #   uv run python -m experiments run configs/experiments/stage_1_1.yaml E1       # parse them, one run per free GPU
 #   uv run python -m experiments log configs/experiments/stage_1_1.yaml E1       # score, compare, log
-# After review, set `winner:` on the experiment; later experiments change options on that winner.
+# Every experiment has `control: base`: E1-E4 each change one lever on B0, so all of them can be parsed now, while
+# the gold is annotated. `log` fills in the gold-free metrics now and scores every run again whenever
+# `annotation collect` updates the gold. `winner:` records the review and moves no other experiment's control.
+# E5 combines the winning levers on B0, and E6 checks the result against B0 on the held-out documents.
+# To make an experiment build on another's winner instead, set `control: <id>`; it is skipped until that winner is set.
 stage: '1.1'
 title: Text extraction and layout categorisation
 aim: >-
   The best text extraction (text quality) and layout categorisation (the right keep or drop decision per
   block), so the custom serializer can keep body text (TEXT, PARAGRAPH, SECTION_HEADER, TITLE, LIST_ITEM) and
   route everything else downstream. Only the core pipeline stages are tuned (Preprocess, Layout, Tables,
-  Assemble). OCR is off throughout: every sampled document has an embedded text layer, and OCR is Stage 1.2+.
+  Assemble), and within Layout only the model: Docling's layout postprocessing (its per-label confidence
+  cut-offs and orphan clusters) is held at its defaults and tuned in a later stage. OCR is off throughout: every
+  sampled document has an embedded text layer, and OCR is Stage 1.2+.
 base_config: configs/docling_b0.yaml      # B0: STANDARD pipeline, Docling defaults except do_ocr=false
 references: [configs/pypdf_default.yaml]  # P0: pypdf full page text, in every table
 output: outputs/stage_1_1                 # variant runs: <output>/<id>_<variant>_<settings hash>
 configs: configs/stage_1_1                # generated run configs
-split: screen                             # 80 screening documents; the 20 held out wait for E8
+split: screen                             # 80 screening documents; the 20 held out wait for E6
 strata: data/strata.csv                   # doc_id,page,tags: multi_column, table_heavy, garbled, ...
 
 # Targets: A text quality (all extracted text), B layout (labels), C serializer (body text, the end result).
@@ -92,6 +98,7 @@ metrics:
 experiments:
   - id: E0
     title: Determinism check
+    control: base
     pipeline_stage: Whole pipeline
     target: A, B, C
     question: Does a second B0 run reproduce the first? Differences here are the noise floor.
@@ -101,6 +108,7 @@ experiments:
 
   - id: E1
     title: PDF backend
+    control: base
     pipeline_stage: Preprocess
     target: A
     question: Does Docling's pypdfium2 backend garble or drop less text than docling-parse?
@@ -111,12 +119,14 @@ experiments:
 
   - id: E2
     title: Layout preset
+    control: base
     pipeline_stage: Layout
     target: B, C
     question: Which layout model labels blocks best, keeping the most body text with the least other text leaking in?
     notes: >-
-      Gold boxes were pre-annotated by Docling's default layout model before correction in CVAT, which can
-      favour layout_heron_default here.
+      Each model is measured through Docling's default postprocessing, held fixed in this stage. Gold boxes were
+      pre-annotated by Docling's default layout model before correction in CVAT, which can favour
+      layout_heron_default here.
     variants:
       heron_101: {layout_model: layout_heron_101}
       egret_medium: {layout_model: layout_egret_medium}
@@ -134,39 +144,8 @@ experiments:
     winner: null
 
   - id: E3
-    title: Layout score threshold
-    pipeline_stage: Layout
-    target: B, C
-    question: How does the minimum detection confidence trade loss against leak on the E2 winner?
-    notes: Option path to verify against the installed Docling; a wrong path fails at parse time.
-    variants:
-      t0.2: {overrides: {layout_options.engine_options.score_threshold: 0.2}}
-      t0.4: {overrides: {layout_options.engine_options.score_threshold: 0.4}}
-      t0.5: {overrides: {layout_options.engine_options.score_threshold: 0.5}}
-    metrics: [layout.f1, body.separation, body.leak, body.loss]
-    winner: null
-
-  - id: E4
-    title: Layout postprocessing
-    pipeline_stage: Layout
-    target: B, A
-    question: Do orphan clusters or the layout postprocessor change dropped text or block labels?
-    notes: Each option is toggled once, separately.
-    variants:
-      no_orphan_clusters: {overrides: {layout_options.create_orphan_clusters: false}}
-      no_postprocessor: {overrides: {layout_options.run_postprocessor: false}}
-    metrics:
-      - extracted.dropped_text_rate
-      - layout.f1
-      - layout.leak_from.footnote
-      - layout.leak_from.caption
-      - layout.leak_from.furniture
-      - body.leak
-      - body.loss
-    winner: null
-
-  - id: E5
     title: Table structure
+    control: base
     pipeline_stage: Tables
     target: Cost (C unchanged)
     question: >-
@@ -176,8 +155,9 @@ experiments:
     metrics: [body.loss, body.leak, body.separation, seconds_per_page]
     winner: null
 
-  - id: E6
+  - id: E4
     title: Reading-order separators
+    control: base
     pipeline_stage: Assemble
     target: C
     question: Do visible rules as reading-order signals reduce the order gap? No effect with pypdfium2.
@@ -186,23 +166,27 @@ experiments:
     metrics: [body.order_gap, body.loss]
     winner: null
 
-  - id: E7
+  - id: E5
     title: Combine
+    control: base
     pipeline_stage: Combine
     target: A, B, C
     question: Do the levers that beat the noise floor add up, or interact?
-    notes: Fill in once E1–E6 are reviewed. Full grid if 3 or fewer levers, else add one at a time.
+    notes: >-
+      Fill in once E1–E4 are reviewed: each variant lists the levers it combines, set on B0. Full grid if 3 or fewer
+      levers, else add one at a time.
     variants: {}
     metrics: [extracted.garble_rate, extracted.loss, layout.f1, body.loss, body.leak, body.separation, seconds_per_page]
     winner: null
 
-  - id: E8
+  - id: E6
     title: Validate
+    control: base
     pipeline_stage: Validate
     target: A, B, C
     question: Do the winner and runner-up hold on the 20 held-out documents?
     notes: >-
-      Reuses runs already parsed, scored on the held-out split; list them as
+      Reuses runs already parsed, scored on the held-out split against B0; list them as
       `<name>: {from: <experiment id>.<variant>}`.
     split: holdout
     variants: {}

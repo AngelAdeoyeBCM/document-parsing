@@ -52,6 +52,10 @@ class Dataset:
             return {}
         return json.loads(self.documents_file.read_text(encoding='utf-8'))
 
+    def pages(self) -> dict[str, list[int]]:
+        """hash_id -> the pages kept (the ones annotated); empty before the dataset is built."""
+        return {hash_id: document['pages'] for hash_id, document in self.documents().items()}
+
 
 def build_dataset(
     inventory: Inventory,

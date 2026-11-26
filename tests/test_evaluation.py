@@ -141,6 +141,12 @@ def test_layout_f1_matches_boxes_of_the_same_label() -> None:
     assert layout_f1(in_pixels, gold, 1)['f1'] == pytest.approx(1.0)  # same page, other units
 
 
+def test_layout_f1_scores_a_gold_title_as_a_section_header() -> None:
+    gold = _boxed((DocItemLabel.TITLE, (0, 0, 50, 10)))
+    run = _boxed((DocItemLabel.SECTION_HEADER, (0, 0, 50, 10)))  # Docling relabels every title
+    assert layout_f1(gold, run, 1) == {'f1.section_header': 1.0, 'f1': 1.0}
+
+
 def test_label_confusions_say_where_body_text_went() -> None:
     gold_body, gold_groups = 'Copper prices rose sharply', {'footnote': 'Source Bloomberg', 'caption': 'Figure 1'}
     run_body, run_groups = 'Copper prices rose Source Bloomberg', {'caption': 'sharply Figure 1'}

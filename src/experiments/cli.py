@@ -2,10 +2,14 @@
 
 1. ``experiments configs <spec> [E1 ...]`` writes a run config for every variant and prints the parse commands.
 2. ``experiments run <spec> [E1 ...]`` parses the base config, references and variants, one run per free GPU at a
-   time (or run ``pipeline run <config> [--shard i/n]`` yourself; it takes the GPU with the most free memory).
+   time (or run ``pipeline run <config> [--shard i/n]`` yourself, choosing the GPU with ``CUDA_VISIBLE_DEVICES``;
+   without it Docling takes the first GPU, busy or not).
 3. ``experiments log <spec> [E1 ...]`` scores new runs, compares every row with its control and logs each
    experiment to its own MLflow experiment (``stage-<stage>/<id> <title>``), with a stage overview alongside.
-4. Review, set ``winner:`` in the spec, and repeat for the next experiment, which builds on that winner.
+   Before the gold is collected only the gold-free metrics are filled in; once ``annotation collect`` writes or
+   updates it, the next ``log`` scores every run again.
+4. Review and set ``winner:`` in the spec. An experiment with ``control: base`` never waits for a winner; one with
+   ``control: <id>`` is skipped until that experiment's winner is set.
 """
 
 from __future__ import annotations
@@ -23,7 +27,7 @@ from queue import Empty, SimpleQueue
 import yaml
 
 from .device import free_gpus
-from .spec import Spec
+from .spec import NoWinnerYet, Spec
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +74,7 @@ def _configs(args: argparse.Namespace) -> int:
 def _write_configs(spec: Spec, ids: Sequence[str]) -> list[Path]:
     """Write each variant's run config, print its parse command and return the configs."""
     paths = []
-    for experiment in _chosen(spec, ids):
+    for experiment in _ready(spec, ids):
         for variant in experiment.variants:
             if variant.source:
                 continue  # reuses another experiment's run
@@ -131,12 +135,15 @@ def _log(args: argparse.Namespace) -> int:
         logger.warning('no strata file at %s; comparisons are over all pages only', spec.strata)
     score = _Scorer(args.inventory, args.gold)
     gold_time = _gold_time(args.gold)
-    for experiment in _chosen(spec, args.ids):
+    if not gold_time:
+        logger.info('no gold in %s yet: logging the gold-free metrics only', args.gold)
+    for experiment in _ready(spec, args.ids):
         results = evaluate(spec, experiment, score, seed=args.seed, gold_time=gold_time)
         for result in results:
             if result.status != 'ok':
                 logger.warning('%s %s: %s (%s)', experiment.id, result.arm.name, result.status, result.arm.run_dir)
-            missing = [m for m in experiment.metrics if m not in result.means]
+            expected = [m for m in experiment.metrics if gold_time or not spec.info(m).gold]
+            missing = [m for m in expected if m not in result.means]
             if result.status == 'ok' and missing:
                 logger.warning('%s %s: no %s', experiment.id, result.arm.name, ', '.join(missing))
         log_experiment(spec, experiment, results)
@@ -160,10 +167,11 @@ class _Scorer:
         if self._loaded is None:
             if not self.inventory.is_file():
                 raise SystemExit(f'no inventory at {self.inventory}; pass --inventory <input directory>/inventory.db')
-            self._loaded = (InventoryStore(self.inventory), load_gold(Workspace(self.gold)))
-        store, gold = self._loaded
+            workspace = Workspace(self.gold)
+            self._loaded = (InventoryStore(self.inventory), load_gold(workspace), workspace.pages())
+        store, gold, pages = self._loaded
         logger.info('%s: scoring', run_dir)
-        evaluate_run(run_dir, store, gold, self.gold.as_posix())
+        evaluate_run(run_dir, store, gold, self.gold.as_posix(), pages=pages)
 
 
 def _gold_time(workspace: Path) -> float:
@@ -173,5 +181,17 @@ def _gold_time(workspace: Path) -> float:
     return max((path.stat().st_mtime for path in Workspace(workspace).gold.rglob('*.parquet')), default=0.0)
 
 
-def _chosen(spec: Spec, ids: Sequence[str]):
-    return [spec.experiment(i) for i in ids] if ids else list(spec.experiments)
+def _ready(spec: Spec, ids: Sequence[str]):
+    """The chosen experiments (default: all) with variants and a settled control; the rest are logged as waiting."""
+    ready = []
+    for experiment in [spec.experiment(i) for i in ids] if ids else spec.experiments:
+        if not experiment.variants:
+            logger.info('skipped: %s has no variants yet', experiment.id)
+            continue
+        try:
+            spec.control(experiment)
+        except NoWinnerYet as waiting:
+            logger.info('skipped: %s', waiting)
+            continue
+        ready.append(experiment)
+    return ready

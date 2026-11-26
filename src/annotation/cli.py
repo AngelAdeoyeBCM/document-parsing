@@ -8,12 +8,16 @@
    correct boxes, labels and the reading-order line, then export each task's annotations as a zip into
    <dataset>/cvat/cvat_annotations/zips/
 3. annotation collect [dataset]   the ground-truth parquet that `evaluation score` reads
+
+Annotate on a rolling basis: export each task once it is fully corrected and collect again. ``annotation tasks``
+says which split each task's documents are in, so the screening documents can be done first.
 """
 
 from __future__ import annotations
 
 import argparse
 import logging
+from collections import Counter
 from collections.abc import Sequence
 from pathlib import Path
 
@@ -46,6 +50,10 @@ def _arguments() -> argparse.ArgumentParser:
     collecting = commands.add_parser('collect', help='turn the CVAT exports into the ground-truth parquet')
     collecting.add_argument('dataset', type=Path, nargs='?', default=DEFAULT_WORKSPACE)
     collecting.set_defaults(handler=_collect)
+
+    tasks = commands.add_parser('tasks', help="each CVAT task's split and page count, to annotate screening first")
+    tasks.add_argument('dataset', type=Path, nargs='?', default=DEFAULT_WORKSPACE)
+    tasks.set_defaults(handler=_tasks)
     return parser
 
 
@@ -58,4 +66,17 @@ def _prepare(args: argparse.Namespace) -> int:
 
 def _collect(args: argparse.Namespace) -> int:
     logger.info('ground truth written to %s', collect(Workspace(args.dataset)))
+    return 0
+
+
+def _tasks(args: argparse.Namespace) -> int:
+    """CVAT names each page image ``doc_<hash>_page_<n>.<ext>``, the hash being the truncated PDF's."""
+    from evaluation import split  # evaluation imports this package, so not at module level
+
+    workspace = Workspace(args.dataset)
+    source_of = {document['truncated_hash']: hash_id for hash_id, document in workspace.documents().items()}
+    for task in sorted(workspace.cvat.glob('cvat_tasks/task_*')):
+        pages = Counter(source_of.get(image.name.split('_')[1]) for image in task.glob('doc_*_page_*'))
+        splits = '+'.join(sorted({split(hash_id) if hash_id else 'unknown' for hash_id in pages}))
+        print(f'{task.name}  {splits:<14}  {sum(pages.values()):>3} pages from {len(pages)} documents')
     return 0

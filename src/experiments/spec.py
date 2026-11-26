@@ -1,8 +1,11 @@
 """A stage's experiment spec: which runs each experiment compares, resolved into parse configs.
 
-Each experiment changes parser options on the *current best* config: the ``winner`` of the latest earlier
-experiment that names one, else the spec's ``base_config``. A variant's run directory carries a hash of its parse
-settings, so changing an earlier winner gives new directories instead of clashing with old runs.
+Each experiment changes parser options on its control, set by its ``control`` key:
+- ``base``: the spec's ``base_config``, whatever winners are chosen; parsing never waits on gold or review.
+- an experiment id, e.g. ``E2``: that experiment's winner; until it is chosen the experiment waits (``NoWinnerYet``).
+- unset: the *current best*, the winner of the latest earlier experiment that names one, else ``base_config``.
+A variant's run directory carries a hash of its parse settings, so changing a winner a control depends on gives new
+directories instead of clashing with old runs.
 """
 
 from __future__ import annotations
@@ -20,6 +23,10 @@ import yaml
 from pipeline.config import RunConfig
 
 Role = Literal['reference', 'control', 'variant']
+
+
+class NoWinnerYet(LookupError):
+    """The experiment builds on another whose winner is not chosen yet."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -52,6 +59,7 @@ class Experiment:
     variants: tuple[Variant, ...]
     split: str | None = None  # None: the spec's split
     winner: str | None = None  # variant name (or 'control') chosen after review
+    control: str | None = None  # 'base', an earlier experiment's id, or None for the latest earlier winner
     notes: str = ''
 
 
@@ -143,12 +151,24 @@ class Spec:
         return [_arm_from_file('reference', path) for path in self.references]
 
     def best_from(self, experiment: Experiment) -> Experiment | None:
-        """The latest experiment before ``experiment`` with a winner, or None while the base config is the best."""
+        """The experiment whose winner is ``experiment``'s control, or None when that is the base config.
+
+        Raises ``NoWinnerYet`` when the control names an experiment that has no winner yet.
+        """
         index = self.experiments.index(experiment)
+        if experiment.control == 'base':
+            return None
+        if experiment.control:
+            source = self.experiment(experiment.control)
+            if self.experiments.index(source) >= index:
+                raise ValueError(f'{experiment.id}: control {source.id} must be an earlier experiment')
+            if not source.winner:
+                raise NoWinnerYet(f'{experiment.id} builds on the winner of {source.id}, which is not chosen yet')
+            return source
         return next((e for e in reversed(self.experiments[:index]) if e.winner), None)
 
     def control(self, experiment: Experiment) -> Arm:
-        """The current best before ``experiment``: the latest earlier winner, else the base config."""
+        """The run ``experiment`` changes options on: see ``best_from``."""
         earlier = self.best_from(experiment)
         if earlier is None:
             return _arm_from_file('control', self.base_config)
@@ -234,5 +254,6 @@ def _experiment(raw: Mapping[str, Any]) -> Experiment:
         variants=tuple(variants),
         split=raw.get('split'),
         winner=raw.get('winner'),
+        control=raw.get('control'),
         notes=raw.get('notes', ''),
     )

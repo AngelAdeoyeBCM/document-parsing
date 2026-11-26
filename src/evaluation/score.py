@@ -18,7 +18,7 @@ import csv
 import json
 import math
 import statistics
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Collection, Iterable, Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
@@ -48,12 +48,14 @@ def evaluate_run(
     gold: Mapping[str, Gold],
     gold_name: str = '',
     serializations: Sequence[str] = DEFAULT_SERIALIZATIONS,
+    pages: Mapping[str, Collection[int]] | None = None,
 ) -> Path:
-    """Score every parsed page of the run and write ``<run dir>/evaluation``; returns that directory.
+    """Score the parsed pages of the run and write ``<run dir>/evaluation``; returns that directory.
 
     ``gold`` is ``annotation.load_gold``'s result, keyed by the source PDF's hash_id; the pages a gold document holds
-    are scored under each of
-    ``serializations``, run and gold serialized alike.
+    are scored under each of ``serializations``, run and gold serialized alike. ``pages`` (hash_id -> page numbers,
+    ``Dataset.pages``) limits a listed document's rows to those pages, so the gold-free metrics cover the same pages
+    the gold does and not the triaged tail the runs also parse.
     """
     names = tuple(dict.fromkeys(('extracted', 'body', *serializations)))  # 'body' for the layout confusions
     rows: list[Row] = []
@@ -69,9 +71,10 @@ def evaluate_run(
         truth = _gold_text(gold, source.hash_id, names)
         seconds = parsed.seconds / max(1, len(parsed.page_numbers))
         pypdf = {page.page_number: page.pypdf_seconds for page in store.pages(source.hash_id)}
-        numbers = parsed.page_numbers
+        kept = pages.get(source.hash_id) if pages else None
+        numbers = [n for n in parsed.page_numbers if kept is None or n in kept]
         pypdf_seconds = statistics.fmean(pypdf.get(n, math.nan) for n in numbers) if numbers else math.nan
-        for number in parsed.page_numbers:
+        for number in numbers:
             output = text['extracted'].get(number, '')
             row: Row = {
                 'doc_id': source.doc_id,
@@ -82,9 +85,9 @@ def evaluate_run(
                 'extracted.garble_rate': garble_rate(output),
                 'extracted.dropped_text_rate': dropped_text_rate(output, reference[number - 1]),
             }
-            for kind, pages in elements.items():
-                if number in pages:
-                    row[f'extracted.garble_rate.{kind}'] = garble_rate(pages[number])
+            for kind, by_page in elements.items():
+                if number in by_page:
+                    row[f'extracted.garble_rate.{kind}'] = garble_rate(by_page[number])
             if truth and number in truth['pages']:
                 gold_pages += 1
                 full = gold_metrics(truth['extracted'].get(number, ''), '', output)

@@ -80,9 +80,9 @@ Detects boxes and labels (text, table, figure, heading).
 | ↳ 🟢 `preset`                         | `layout_heron_default` (default), `layout_heron_101`, `layout_egret_medium`, `layout_egret_large`, `layout_egret_xlarge` (higher accuracy on complex documents). Preset ids for 101 and medium inferred from the model specs.                                                                         |
 | ↳ ⚫ `keep_empty_clusters`            | Default `False`. No effect on text.                                                                                                                                                                                                                                                                           |
 | ↳ ⚫ `skip_cell_assignment`           | Default `False`. `True` skips assigning cells to clusters, for speed; likely drops text.                                                                                                                                                                                                                    |
-| ↳ 🟢 `create_orphan_clusters`         | Default `True`. Isolated elements get their own cluster.                                                                                                                                                                                                                                                      |
-| ↳ 🟢 `engine_options.score_threshold` | Default `0.3` (from the docs). Minimum detection confidence.                                                                                                                                                                                                                                                  |
-| ↳ 🟢 `run_postprocessor`              | Default `True`. `False` passes raw clusters through.                                                                                                                                                                                                                                                        |
+| ↳ ⚪ `create_orphan_clusters`         | Default `True`. Postprocessing: each text line no kept box covers becomes its own `TEXT` box (body text); `False` drops that text. A loss-against-leak trade-off that depends on the layout model. Later stage. |
+| ↳ ⚪ `engine_options.score_threshold` | Default `0.3`. The model's detection cut-off, applied before postprocessing, whose fixed per-label cut-offs (0.5 for text, footnote, caption, page header and footer, table, picture; 0.45 for section header and title; `LayoutPostprocessor.CONFIDENCE_THRESHOLDS`, not an option) decide what is kept. Lowering it changes nothing; raising it above 0.45 only drops boxes. Tuning means overriding the per-label table. Later stage. |
+| ↳ ⚫ `run_postprocessor`              | Not an option of the standard pipeline (Docling 2.153): it is set from the layout model, always `True` for these presets. The postprocessor also relabels `TITLE` as `SECTION_HEADER`, so runs never output `TITLE`. |
 | ⚪ `force_backend_text`                | Default `False`. `True` re-reads each element's text from the PDF backend inside its box, instead of joining the text cells assigned to it (which may include OCR cells). Only matters when OCR cells are present: Stage 1.2+. External: repair ligature or encoding issues after extraction. |
 | ⚪ `layout_batch_size`                 | Default `4`. Stage 1.7.                                                                                                                                                                                                                                                                                       |
 
@@ -92,7 +92,7 @@ Rebuilds row and column structure.
 
 | Option                                           | Values and what they do                                                                                                                                                                                      |
 | :----------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 🟢 `do_table_structure`                        | Default `True`. `False` still detects tables (label `TABLE`) but skips rebuilding rows and columns. Table text is excluded from the text-only output, so likely fixed at `False` after a check (E5). |
+| 🟢 `do_table_structure`                        | Default `True`. `False` still detects tables (label `TABLE`) but skips rebuilding rows and columns. Table text is excluded from the text-only output, so likely fixed at `False` after a check (E3). |
 | ⚫ `table_structure_options`                   | Default `TableStructureOptions()` (TableFormer V1). Applies only when `do_table_structure=True`. Compare the three classes. External: alternative table extractors for hard tables.                      |
 | ↳ ⚫ `TableStructureOptions.mode`             | `TableFormerMode`: `ACCURATE` (default) or `FAST`.                                                                                                                                                     |
 | ↳ ⚫ `TableStructureOptions.do_cell_matching` | Default `True`. Matches predictions back to PDF cells.                                                                                                                                                     |
@@ -186,8 +186,8 @@ Each target is measured on different text, so each experiment moves mainly one o
 
 | Target | Measured on | Question | Metrics | Moved by |
 |:-------|:------------|:---------|:--------|:---------|
-| **A. Text quality** | All output text, before filtering | Are the characters and words right? | Garble rate, dropped-text rate (no gold needed); full-text loss, diacritic fidelity (gold) | E1, E4 |
-| **B. Layout** | Labels: boxes, and the body words they keep or drop | Is each block labelled, and so kept or dropped, correctly? | Layout F1, targeted confusions (leak from and loss to each label group), separation rate | E2 to E4 |
+| **A. Text quality** | All output text, before filtering | Are the characters and words right? | Garble rate, dropped-text rate (no gold needed); full-text loss, diacritic fidelity (gold) | E1 |
+| **B. Layout** | Labels: boxes, and the body words they keep or drop | Is each block labelled, and so kept or dropped, correctly? | Layout F1, targeted confusions (leak from and loss to each label group), separation rate | E2 |
 | **C. Serializer** | Body text after filtering | Does the end result match gold body text? | Loss rate, leak rate, order gap | All |
 
 ### Metric definitions
@@ -214,27 +214,25 @@ All text is normalised identically first: NFC, whitespace collapsed, line-end hy
 
 ### Experiments
 
-Run in order. Each changes one lever against the current best config (B0 until a winner is found).
+E1 to E4 each change one lever on B0, so all can be parsed while the gold is annotated; E5 combines the levers that beat the noise floor, and E6 validates. Layout postprocessing (per-label confidence cut-offs, orphan clusters) is held at its defaults and tuned in a later stage.
 
 | # | Stage | Lever | Variants (default first) | Target | Primary metrics |
 |:--|:------|:------|:-------------------------|:-------|:----------------|
 | E1 | Preprocess | `PdfBackend` | `THREADED_DOCLING_PARSE`, `PYPDFIUM2` | A | Garble rate, dropped-text rate, full-text loss, time per page |
 | E2 | Layout | `layout_options.preset` | `layout_heron_default`, `layout_heron_101`, `layout_egret_medium`, `layout_egret_large`, `layout_egret_xlarge` | B, C | Layout F1, targeted confusions, separation, leak and loss rates, latency |
-| E3 | Layout | `engine_options.score_threshold` (verify path in source) | 0.2, 0.3, 0.4, 0.5 on the E2 winner | B, C | Layout F1; leak against loss trade-off |
-| E4 | Layout | `create_orphan_clusters`; `run_postprocessor` | Each toggled once, separately | B, A | Dropped-text rate, layout F1, targeted confusions, leak and loss rates |
-| E5 | Tables | `do_table_structure` | `True`, `False` | Cost | Confirm loss, leak and separation unchanged (table text must not fall back into body), then fix at `False` for speed |
-| E6 | Assemble | `use_reading_order_separators` | `True`, `False` (no effect with `PYPDFIUM2`) | C | Order gap |
-| E7 | Combine | Levers whose effect beat the noise floor | Full grid if 3 or fewer levers, else add one at a time | A, B, C | All primary metrics, interaction effects |
-| E8 | Validate | Winner and runner-up | Full corpus, plus the 20 held-out documents | A, B, C | Label-free scores, failure rate, time per page |
+| E3 | Tables | `do_table_structure` | `True`, `False` | Cost | Confirm loss, leak and separation unchanged (table text must not fall back into body), then fix at `False` for speed |
+| E4 | Assemble | `use_reading_order_separators` | `True`, `False` (no effect with `PYPDFIUM2`) | C | Order gap |
+| E5 | Combine | Levers whose effect beat the noise floor | Full grid if 3 or fewer levers, else add one at a time | A, B, C | All primary metrics, interaction effects |
+| E6 | Validate | Winner and runner-up | Full corpus, plus the 20 held-out documents | A, B, C | Label-free scores, failure rate, time per page |
 
-Order: E1 (text source fixed) → E2 → E3 → E4 (layout) → E5, E6 → E7 → E8. The serializer keep set needs no experiment: the `body` and `body_tables` serializations are both scored. Heading hierarchy does not change text-only chunks and is deferred to 1.6.
+Order: E1 to E4 (in parallel) → E5 → E6. The serializer keep set needs no experiment: the `body` and `body_tables` serializations are both scored. Heading hierarchy does not change text-only chunks and is deferred to 1.6.
 
 ### Judging differences
 
 - **Unit:** pages, grouped by stratum (below), so a regression in one type is not hidden by the mean.
 - **Comparison:** pair every config with the current best on the same pages. Report the mean difference with a bootstrap 95% interval, resampling by document, plus win, tie and loss counts.
 - **Noise floor:** CPU inference is near-deterministic, so the B0 rerun is a determinism check. Uncertainty comes from page sampling, which the bootstrap covers.
-- **Overfitting:** E1 to E6 are screened on 80 documents; confirm winners on the 20 held-out documents, untouched until E8.
+- **Overfitting:** E1 to E5 are screened on 80 documents; confirm winners on the 20 held-out documents, untouched until E6.
 - **No thresholds for now:** review mean differences, intervals and win, tie and loss counts in MLflow, and choose from the quality-against-time Pareto front.
 
 ### Sample and gold labels

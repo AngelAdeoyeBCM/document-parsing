@@ -40,6 +40,9 @@ CONFUSION_GROUPS = {
     'picture': (PICTURE_TEXT,),
 }
 IOU_MATCH = 0.5
+# Labels scored as another in layout F1: Docling's layout postprocessor relabels every TITLE as SECTION_HEADER, so
+# runs never output TITLE, and gold titles would otherwise score 0 for every run.
+LAYOUT_ALIASES = {'title': 'section_header'}
 
 
 def normalise(text: str) -> str:
@@ -94,6 +97,7 @@ def layout_f1(gold: DoclingDocument, run: DoclingDocument, page: int) -> dict[st
 
     A box matches a gold box of the same label at IoU >= 0.5, greedily from the highest IoU; F1 is
     2 * matches / (gold boxes + run boxes). Items nested in pictures are skipped, as the gold does not box them.
+    Labels in ``LAYOUT_ALIASES`` count as their alias (a title as a section header).
     """
     expected, found = _boxes(gold, page), _boxes(run, page)
     scores = {}
@@ -139,7 +143,8 @@ def _boxes(doc: DoclingDocument, page: int) -> dict[str, list[BoundingBox]]:
             for prov in item.prov:
                 if prov.page_no == page:
                     box = prov.bbox.to_top_left_origin(size.height).normalized(size)
-                    boxes.setdefault(item.label.value, []).append(box)
+                    label = LAYOUT_ALIASES.get(item.label.value, item.label.value)
+                    boxes.setdefault(label, []).append(box)
     return boxes
 
 

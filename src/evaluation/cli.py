@@ -55,11 +55,12 @@ def _score(args: argparse.Namespace) -> int:
     if not args.inventory.is_file():
         raise SystemExit(f'no inventory at {args.inventory}; pass --inventory <input directory>/inventory.db')
     store = InventoryStore(args.inventory)
-    gold = load_gold(Workspace(args.gold))
+    workspace = Workspace(args.gold)
+    gold, pages = load_gold(workspace), workspace.pages()
     logger.info('gold: %d documents from %s', len(gold), args.gold)
     for run in args.runs:
         serializations = args.serialization or DEFAULT_SERIALIZATIONS
-        evaluation = evaluate_run(run, store, gold, args.gold.as_posix(), serializations)
+        evaluation = evaluate_run(run, store, gold, args.gold.as_posix(), serializations, pages)
         logger.info('%s: scored into %s', run.name, evaluation)
     return 0
 

@@ -24,12 +24,15 @@ def load_gold(workspace: Workspace) -> dict[str, Gold]:
     docling-eval names a record by file stem (the hash_id) or by the truncated file's content hash depending on the
     stage, so both are matched.
     """
+    paths = sorted(workspace.gold.rglob('*.parquet'))
+    if not paths:
+        return {}  # not collected yet: runs are scored on the gold-free metrics only
     import pyarrow.parquet as pq  # optional dependency: only reading gold needs it
 
     documents = workspace.documents()
     by_truncated_hash = {document['truncated_hash']: hash_id for hash_id, document in documents.items()}
     gold: dict[str, Gold] = {}
-    for path in sorted(workspace.gold.rglob('*.parquet')):
+    for path in paths:
         names = pq.read_schema(path).names
         wanted = [name for name in ('document_id', 'GroundTruthDocument', 'document_filehash') if name in names]
         table = pq.read_table(path, columns=wanted)  # leaves the page images and PDF bytes unread

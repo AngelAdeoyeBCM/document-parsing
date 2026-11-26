@@ -11,6 +11,23 @@ from annotation import Workspace, collect, load_gold, prepare
 from parsing.core import serialize
 
 
+def test_tasks_lists_each_cvat_tasks_split(tmp_path: Path, capsys) -> None:
+    from annotation.cli import main
+    from evaluation import split
+
+    source, truncated = 'ab' * 32, 'cd' * 32  # SHA-256 of the original and of the truncated copy
+    workspace = Workspace(tmp_path)
+    workspace.documents_file.write_text(
+        json.dumps({source: _documents()['source-hash'] | {'truncated_hash': truncated}})
+    )
+    task = workspace.cvat / 'cvat_tasks' / 'task_00'
+    task.mkdir(parents=True)
+    for page in (1, 2):
+        (task / f'doc_{truncated}_page_{page:06}.png').write_bytes(b'')
+    assert main(['tasks', str(tmp_path)]) == 0
+    assert capsys.readouterr().out.split() == ['task_00', split(source), '2', 'pages', 'from', '1', 'documents']
+
+
 def _documents(pages: list[int] | None = None) -> dict[str, dict]:
     """A dataset's documents.json with one document, as `pipeline dataset` writes it."""
     entry = {

@@ -9,3 +9,6 @@ data/
 outputs/
 storage/
 *.7z
+mlflow.db
+mlruns/
+mlartifacts/

@@ -27,25 +27,28 @@ def experiment_name(spec: Spec, experiment: Experiment) -> str:
 
 def stage_overview(spec: Spec) -> str:
     experiments = [
-        [e.id, e.title, e.pipeline_stage, e.target, e.question, len(e.variants), _code(e.winner or 'not chosen')]
+        [
+            e.id, e.title, e.pipeline_stage, e.target, e.question, len(e.variants),
+            e.control or 'latest winner', _code(e.winner or 'not chosen'),
+        ]
         for e in spec.experiments
-    ]
+    ]  # fmt: skip
     return _join([
         f'# Stage {spec.stage}: {spec.title}',
         spec.aim,
         _pairs([
             ('Spec', _code(spec.path.as_posix())),
-            ('Base config (control until a winner is chosen)', _code(spec.base_config.as_posix())),
+            ('Base config', _code(spec.base_config.as_posix())),
             ('Reference rows, in every table', ', '.join(_code(p.as_posix()) for p in spec.references) or 'none'),
             ('Default split', spec.split),
             ('Strata', _code(spec.strata.as_posix()) if spec.strata else 'none'),
         ]),
         '## Experiments',
         (
-            'Each one is its own MLflow experiment and changes parser options on the current best: the winner of '
-            'the latest earlier experiment that has one.'
+            'Each one is its own MLflow experiment and changes parser options on its control: the base config '
+            '(`base`), a named experiment\'s winner, or the winner of the latest earlier experiment that has one.'
         ),
-        _table(['id', 'title', 'pipeline stage', 'target', 'question', 'variants', 'winner'], experiments),
+        _table(['id', 'title', 'pipeline stage', 'target', 'question', 'variants', 'control', 'winner'], experiments),
         '## Metrics',
         _metrics(spec.metrics),
         '## Statistics',

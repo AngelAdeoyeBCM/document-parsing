@@ -84,6 +84,29 @@ def test_variants_change_options_on_the_current_best(spec_path: Path) -> None:
     assert other.run_dir != no_tables.run_dir and 'overrides.do_table_structure' not in other.options
 
 
+def test_control_base_ignores_winners_and_a_named_control_waits_for_its_winner(spec_path: Path) -> None:
+    from experiments import NoWinnerYet
+    from experiments.cli import _ready
+
+    raw = yaml.safe_load(spec_path.read_text(encoding='utf-8'))
+    raw['experiments'][1]['control'] = 'base'
+    raw['experiments'][2]['control'] = 'E1'
+    spec_path.write_text(yaml.safe_dump(raw), encoding='utf-8')
+    spec = Spec.load(spec_path)
+    e1, e2, e8 = spec.experiments
+    with pytest.raises(NoWinnerYet):
+        spec.control(e8)
+    assert _ready(spec, []) == [e1, e2]  # E8 waits for E1's winner
+    before = spec.variant(e2, 'separators').run_dir
+
+    raw['experiments'][0]['winner'] = 'pypdfium2'
+    spec_path.write_text(yaml.safe_dump(raw), encoding='utf-8')
+    spec = Spec.load(spec_path)
+    e1, e2, e8 = spec.experiments
+    assert spec.control(e2).name == 'b0' and spec.variant(e2, 'separators').run_dir == before  # runs stay valid
+    assert spec.control(e8).run_dir == spec.variant(e1, 'pypdfium2').run_dir and spec.best_from(e8) == e1
+
+
 def _row(metric: str, diff: float, low: float, high: float, stratum: str = 'all') -> dict[str, str]:
     counts = {'higher': '1', 'equal': '0', 'lower': '2'}
     return {'metric': metric, 'stratum': stratum, 'documents': '2', 'pages': '3', 'diff': diff, 'low': low, 'high': high} | counts  # fmt: skip

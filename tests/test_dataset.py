@@ -36,6 +36,7 @@ def test_dataset_holds_the_sampled_pdfs_truncated_and_named_by_source_hash(tmp_p
     assert sorted(documents) == sorted([note, short])
     assert documents[note]['source'] == 'bnp/note.pdf'
     assert (documents[note]['pages'], documents[note]['skipped']) == ([1, 2, 3], [4, 5])
+    assert dataset.pages()[note] == [1, 2, 3]  # the pages runs are scored on
     assert documents[note]['truncated_hash'] == file_hash(dataset.pdfs / f'{note}.pdf')  # docling-eval's doc_hash
     assert set(documents[note]['stratum']) == {'length', 'density', 'imagery'}
     assert dataset.manifest_file.read_text().splitlines() == ['bnp/note.pdf', 'bnp/short.pdf']  # for the parse runs
