@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from dataclasses import replace
+
 from docling_core.types.doc import (
     BoundingBox,
     CoordOrigin,
@@ -11,9 +13,9 @@ from docling_core.types.doc import (
 )
 from PIL import Image
 
-from inventory import PdfSource
+from inventory import PdfSource, truncate_pdf
 from parsing.parsers import get_parser
-from parsing.visualizer import (
+from visualizer import (
     TOGGLES,
     AttachmentVisualizer,
     InteractivePage,
@@ -92,13 +94,16 @@ def test_interactive_page_links_boxes_items_and_what_is_attached() -> None:
     assert 'PDF words nested 1/4 (25%)' in page and 'class="inner-text low"' in page  # most chart text was lost
 
 
-def test_pages_skipped_by_triage_are_shown_as_skipped(make_pdf) -> None:
-    path = make_pdf('note.pdf', [['Copper outlook 2025'], ['Disclosures'], ['More analysis']])
-    parsed = get_parser('pypdf').parse(PdfSource.from_path(path), skip=frozenset({2}))
+def test_pages_skipped_by_triage_are_shown_as_skipped(make_pdf, tmp_path) -> None:
+    source = PdfSource.from_path(make_pdf('note.pdf', [['Copper outlook 2025'], ['More analysis'], ['Disclosures']]))
+    truncated = tmp_path / 'copy' / 'note.pdf'
+    truncated.parent.mkdir()
+    truncate_pdf(source.path, {3}, truncated)  # triage skipped the tail
+    parsed = replace(get_parser('pypdf').parse(source, truncated), skipped_pages=frozenset({3}))
     page = visualize(parsed)
 
     assert page.count('<section class="page">') == 3 and page.count('data:image/png') == 3  # every source page
-    assert page.count('class="skipped"') == 1 and 'Page 2</div><div class="sheet"><img' in page
+    assert page.count('class="skipped"') == 1 and 'Page 3</div><div class="sheet"><img' in page
     assert 'Disclosures' not in page  # not parsed, so nothing listed for it
-    assert page.count('class="item"') == 2 and 'skipped pages: 2' in page
+    assert page.count('class="item"') == 2 and 'skipped pages: 3' in page
     assert 'type="checkbox"' not in page  # no pictures or captions, so nothing to toggle

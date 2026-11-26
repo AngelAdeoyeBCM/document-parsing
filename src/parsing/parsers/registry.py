@@ -8,8 +8,8 @@ from .base import Parser
 # Imported on demand so the baseline never loads Docling or torch.
 _PARSERS = {
     'pypdf': 'parsing.parsers.pypdf_parser:PypdfParser',
-    'docling': 'parsing.parsers.docling_parser:DoclingStandardParser',
-    'docling-vlm': 'parsing.parsers.docling_parser:DoclingVlmParser',
+    'docling': 'parsing.parsers.docling_standard:DoclingStandardParser',
+    'docling-vlm': 'parsing.parsers.docling_vlm:DoclingVlmParser',
 }
 
 

@@ -30,7 +30,7 @@ def _config(tmp_path: Path, make_pdf) -> RunConfig:
             'input': {'directory': str(tmp_path / 'raw'), 'manifest': str(manifest)},
             'output': str(tmp_path / 'out'),
             'parser': {'name': 'pypdf'},
-            'triage': {'policy': 'tail', 'keep_first': 1, 'min_share': 0.3},
+            'triage': {'keep_first': 1, 'min_share': 0.3},
         }
     )
 
@@ -81,17 +81,17 @@ def test_prepare_and_collect_run_docling_eval_in_order(tmp_path: Path, make_pdf,
     assert calls[-1][:3] == ['create-gt', '--benchmark', 'CVAT']
 
 
-def test_load_gold_renumbers_to_source_pages_and_matches_by_hash(tmp_path: Path) -> None:
+def test_load_gold_keeps_source_page_numbers_and_matches_by_hash(tmp_path: Path) -> None:
     pa, pq = pytest.importorskip('pyarrow'), pytest.importorskip('pyarrow.parquet')
     workspace = Workspace(tmp_path / 'ws')
     workspace.root.mkdir()
     documents = {
-        'note': {'source': 'bnp/note.pdf', 'hash_id': 'source-hash', 'subset_hash': 'subset-hash', 'pages': [1, 3, 4]}
+        'note': {'source': 'bnp/note.pdf', 'hash_id': 'source-hash', 'subset_hash': 'subset-hash', 'pages': [1, 2]}
     }
     workspace.documents_file.write_text(json.dumps(documents))
 
     truth = DoclingDocument(name='subset-hash')
-    truth.add_page(page_no=2, size=Size(width=100, height=100))  # truncated page 2 is source page 3
+    truth.add_page(page_no=2, size=Size(width=100, height=100))  # a tail-truncated copy keeps the source's numbers
     truth.add_text(DocItemLabel.TEXT, 'Prices rose.', prov=ProvenanceItem(
         page_no=2, bbox=BoundingBox(l=0, t=10, r=10, b=0), charspan=(0, 1)
     ))  # fmt: skip
@@ -108,10 +108,16 @@ def test_load_gold_renumbers_to_source_pages_and_matches_by_hash(tmp_path: Path)
 
     shard('shard_000000_000000.parquet', ['subset-hash', 'unknown'])  # named by hash; one record matches nothing
     [(doc_id, (source_hash, document))] = load_gold(workspace).items()
-    assert (doc_id, source_hash, list(document.pages)) == ('note', 'source-hash', [3])
-    assert serialize(document, 'body') == {3: 'Prices rose.'}
+    assert (doc_id, source_hash, list(document.pages)) == ('note', 'source-hash', [2])
+    assert serialize(document, 'body') == {2: 'Prices rose.'}
 
     shard('shard_000000_000001.parquet', ['note'])
     with pytest.raises(ValueError, match='twice'):
         load_gold(workspace)
     assert load_gold(Workspace(tmp_path / 'empty')) == {}
+
+    (workspace.gold / 'gt_dataset/test/shard_000000_000001.parquet').unlink()
+    documents['note']['pages'] = [1, 3, 4]  # not the leading pages: numbering would no longer match the source
+    workspace.documents_file.write_text(json.dumps(documents))
+    with pytest.raises(ValueError, match='not the leading pages'):
+        load_gold(workspace)

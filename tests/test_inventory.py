@@ -6,7 +6,7 @@ import pytest
 from conftest import DISCLOSURE, Image
 
 import inventory.profiler as profiler_module
-from inventory import Inventory, StratifiedSampler
+from inventory import Inventory, StratifiedSampler, truncate_pdf
 from triage import Triage
 
 TEXT = 'Enough meaningful text on this page to exceed the configured sparse threshold for embedded text'
@@ -137,14 +137,14 @@ def test_build_records_triage_verdicts(tmp_path, make_pdf, caplog):
     caplog.set_level('INFO', logger='inventory')
     make_pdf('corpus/note.pdf', [[TEXT], [TEXT], DISCLOSURE])
     inventory = Inventory(tmp_path / 'corpus', tmp_path / 'inventory.db')
-    triage = Triage(policy='tail', keep_first=1)
+    triage = Triage(keep_first=1)
     assert inventory.build(triage=triage).triaged == 1
 
     [profile] = inventory.profiles()
     verdicts, skip = inventory.store.triage(profile.hash_id, triage.key)
     assert skip == frozenset({3})
     assert [verdict.boilerplate for verdict in verdicts] == [False, False, True]
-    assert inventory.store.triage(profile.hash_id, Triage(policy='flagged').key) is None
+    assert inventory.store.triage(profile.hash_id, Triage(keep_first=2).key) is None
 
     with sqlite3.connect(inventory.store.path) as connection:
         row = connection.execute('SELECT triage_policy, skip_pages, n_triage_pages, tail_triage_start FROM documents')
@@ -160,7 +160,7 @@ def test_rules_triage_does_not_depend_on_corpus_changes(tmp_path, make_pdf):
     make_pdf('corpus/a.pdf', [[TEXT], DISCLOSURE])
     make_pdf('corpus/b.pdf', [[TEXT + ' b'], DISCLOSURE])
     inventory = Inventory(tmp_path / 'corpus', tmp_path / 'inventory.db')
-    triage = Triage(policy='tail', keep_first=1)
+    triage = Triage(keep_first=1)
 
     assert inventory.build(triage=triage).triaged == 2
     assert {inventory.store.triage(p.hash_id, triage.key)[1] for p in inventory.profiles()} == {frozenset({2})}
@@ -188,7 +188,7 @@ def test_sample_measures_kept_pages_only(tmp_path, make_pdf):
     plain = Inventory(tmp_path / 'corpus', tmp_path / 'plain.db')
     plain.build()
     triaged = Inventory(tmp_path / 'corpus', tmp_path / 'triaged.db')
-    triaged.build(triage=Triage(policy='tail', keep_first=1))
+    triaged.build(triage=Triage(keep_first=1))
 
     def lengths(inventory: Inventory) -> dict[str, str]:
         groups = StratifiedSampler(inventory.store).strata()
@@ -196,3 +196,56 @@ def test_sample_measures_kept_pages_only(tmp_path, make_pdf):
 
     assert lengths(plain) == {'trimmed.pdf': 'medium', 'short.pdf': 'short'}
     assert lengths(triaged) == {'trimmed.pdf': 'short', 'short.pdf': 'short'}
+
+
+def test_truncate_pdf_keeps_the_leading_pages(tmp_path, make_pdf):
+    from pypdf import PdfReader
+
+    path = make_pdf('note.pdf', [['first'], ['second'], DISCLOSURE, DISCLOSURE])
+    out = tmp_path / 'truncated.pdf'
+    assert truncate_pdf(path, {3, 4}, out) == [1, 2]
+    pages = PdfReader(out).pages
+    assert [page.extract_text().strip() for page in pages] == ['first', 'second']
+    assert truncate_pdf(path, set(), tmp_path / 'whole.pdf') == [1, 2, 3, 4]  # nothing skipped: a full copy
+    with pytest.raises(ValueError, match='not a tail'):
+        truncate_pdf(path, {2, 4}, tmp_path / 'gappy.pdf')
+
+
+def test_truncate_pdf_keeps_hidden_layers_hidden(tmp_path):
+    """A layer the document switches off (``/OCProperties``) must stay off in the copy, or it renders."""
+    import pypdfium2 as pdfium
+    from PIL import ImageChops
+    from pypdf import PdfReader, PdfWriter
+    from pypdf.generic import ArrayObject, DictionaryObject, NameObject, StreamObject, TextStringObject
+
+    writer = PdfWriter()
+    page = writer.add_blank_page(300, 200)
+    layer = writer._add_object(
+        DictionaryObject({NameObject('/Type'): NameObject('/OCG'), NameObject('/Name'): TextStringObject('Template')})
+    )
+    font = DictionaryObject(
+        {
+            NameObject('/Type'): NameObject('/Font'),
+            NameObject('/Subtype'): NameObject('/Type1'),
+            NameObject('/BaseFont'): NameObject('/Helvetica'),
+        }
+    )
+    page[NameObject('/Resources')] = DictionaryObject({
+        NameObject('/Font'): DictionaryObject({NameObject('/F1'): writer._add_object(font)}),
+        NameObject('/Properties'): DictionaryObject({NameObject('/oc1'): layer}),
+    })  # fmt: skip
+    content = StreamObject()
+    content.set_data(b'BT /F1 20 Tf 20 150 Td (Body) Tj ET /OC /oc1 BDC BT /F1 20 Tf 20 100 Td (Hidden) Tj ET EMC')
+    page[NameObject('/Contents')] = writer._add_object(content)
+    writer.add_blank_page(300, 200)  # the tail to drop
+    off = DictionaryObject({NameObject('/OFF'): ArrayObject([layer]), NameObject('/Order'): ArrayObject([layer])})
+    writer.root_object[NameObject('/OCProperties')] = DictionaryObject(
+        {NameObject('/OCGs'): ArrayObject([layer]), NameObject('/D'): off}
+    )
+    source, copy = tmp_path / 'layered.pdf', tmp_path / 'copy.pdf'
+    writer.write(source)
+
+    assert truncate_pdf(source, {2}, copy) == [1]
+    assert len(PdfReader(copy).pages) == 1 and '/OCProperties' in PdfReader(copy).trailer['/Root']
+    original, truncated = (pdfium.PdfDocument(path)[0].render().to_pil().convert('L') for path in (source, copy))
+    assert ImageChops.difference(original, truncated).getbbox() is None  # 'Hidden' still does not render

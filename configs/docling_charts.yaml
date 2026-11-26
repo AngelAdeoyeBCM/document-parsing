@@ -4,7 +4,6 @@ input:
   manifest: data/sample.txt
 output: outputs/docling_charts
 triage:
-  policy: tail
   keep_first: 1
   min_share: 0.3
 parser:

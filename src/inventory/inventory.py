@@ -129,7 +129,7 @@ class Inventory:
                 hash_id,
                 key=triage.key,
                 corpus='',
-                policy=triage.policy,
+                policy='tail',  # the only policy
                 keep_first=triage.keep_first,
                 verdicts=verdicts,
                 skip=skip,

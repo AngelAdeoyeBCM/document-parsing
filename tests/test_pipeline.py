@@ -8,9 +8,10 @@ from conftest import DISCLOSURE
 
 from evaluation import evaluate_run
 from evaluation.score import read_csv
-from inventory import Inventory
+from inventory import Inventory, PdfSource
 from parsing.core import serialize_document
-from pipeline import Pipeline, RunConfig, RunManifest, stages
+from parsing.parsers import get_parser
+from pipeline import DEFAULT_ROUTE, ParseStage, Pipeline, RunConfig, RunManifest, WorkItem
 from pipeline.cli import main
 
 
@@ -87,29 +88,44 @@ def test_serializations_and_visualizations_come_from_a_saved_run(tmp_path: Path,
     assert 'Copper outlook 2025' in page
 
 
-def test_pipeline_reuses_inventory_text(tmp_path: Path, make_pdf, monkeypatch) -> None:
-    make_pdf('raw/bnp/note.pdf', [['Copper outlook 2025'], ['More analysis'], DISCLOSURE])
-    make_pdf('raw/bnp/other.pdf', [['Not in the manifest']])
-    manifest = tmp_path / 'manifest.txt'
-    manifest.write_text('bnp/note.pdf\n')
-    config = _config(tmp_path)
-    inventory = Inventory(config.input.directory, tmp_path / 'inventory.db')
-    inventory.build(manifest)
+def test_parse_stage_parses_only_the_kept_leading_pages(make_pdf) -> None:
+    source = PdfSource.from_path(make_pdf('raw/note.pdf', [['Copper outlook 2025'], ['More analysis'], DISCLOSURE]))
+    stage = ParseStage({DEFAULT_ROUTE: get_parser('pypdf')})
 
-    def no_pypdf(*_args, **_kwargs):
-        raise AssertionError('the stages must reuse the inventory instead of reading the PDF')
+    whole = stage.run(WorkItem(source)).require_document()
+    assert whole.page_numbers == [1, 2, 3] and whole.skipped_pages == frozenset()
 
-    monkeypatch.setattr(stages, 'PdfReader', no_pypdf)
-    items = list(Pipeline.from_config(config, store=inventory.store).run(inventory.sources(manifest)))
+    parsed = stage.run(WorkItem(source, skip=frozenset({3}))).require_document()  # triage skipped the tail
+    assert parsed.page_numbers == [1, 2] and parsed.skipped_pages == {3} and parsed.page_count == 3
+    assert parsed.source == source and parsed.document.name == 'note'  # the copy is parsed as its source
+    assert 'Copper outlook 2025' in parsed.document.export_to_text()
 
-    assert [item.source.doc_id for item in items] == ['note']
-    assert items[0].page_texts[0].startswith('Copper outlook 2025')
+
+# Disabled with TextLayerStage (see pipeline/stages.py).
+#
+# def test_pipeline_reuses_inventory_text(tmp_path: Path, make_pdf, monkeypatch) -> None:
+#     make_pdf('raw/bnp/note.pdf', [['Copper outlook 2025'], ['More analysis'], DISCLOSURE])
+#     make_pdf('raw/bnp/other.pdf', [['Not in the manifest']])
+#     manifest = tmp_path / 'manifest.txt'
+#     manifest.write_text('bnp/note.pdf\n')
+#     config = _config(tmp_path)
+#     inventory = Inventory(config.input.directory, tmp_path / 'inventory.db')
+#     inventory.build(manifest)
+#
+#     def no_pypdf(*_args, **_kwargs):
+#         raise AssertionError('the stages must reuse the inventory instead of reading the PDF')
+#
+#     monkeypatch.setattr(stages, 'PdfReader', no_pypdf)
+#     items = list(Pipeline.from_config(config, store=inventory.store).run(inventory.sources(manifest)))
+#
+#     assert [item.source.doc_id for item in items] == ['note']
+#     assert items[0].page_texts[0].startswith('Copper outlook 2025')
 
 
 @pytest.mark.parametrize(
     'stage',
     [
-        {'triage': {'policy': 'tail'}},
+        {'triage': {'keep_first': 1}},
         {'routes': [{'name': 'image_only'}]},
         {'postprocess': ['chart_filter']},
     ],

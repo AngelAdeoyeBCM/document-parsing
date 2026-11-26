@@ -1,13 +1,12 @@
 from __future__ import annotations
 
+import tempfile
 from abc import ABC, abstractmethod
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field, replace
 from pathlib import Path
 
-from pypdf import PdfReader
-
-from inventory import InventoryStore, PdfSource
+from inventory import PdfSource, truncate_pdf
 from parsing.core import ParsedDocument
 from parsing.parsers import Parser
 from triage import PageVerdict
@@ -15,7 +14,9 @@ from triage import PageVerdict
 from .manifest import save_document
 from .routing import DEFAULT_ROUTE
 
-# Disabled stages (Stage 1.1 runs are TextLayer -> Parse -> Write); restore these imports with them:
+# Disabled stages (Stage 1.1 runs are Parse -> Write); restore these imports with them:
+# from pypdf import PdfReader
+# from inventory import InventoryStore
 # from parsing.postprocess import DocumentProcessor
 # from triage import Triage, run_triage
 # from .routing import Router
@@ -48,25 +49,26 @@ class Stage(ABC):
     def run(self, item: WorkItem) -> WorkItem: ...
 
 
-def read_text_layer(source: PdfSource, store: InventoryStore | None = None) -> tuple[str, ...]:
-    """The pypdf text layer, from the inventory when it holds this content, else read from the PDF."""
-    texts = store.page_texts(source.hash_id) if store is not None else None
-    if texts is None:
-        texts = tuple(page.extract_text() or '' for page in PdfReader(source.path).pages)
-    return texts
-
-
-class TextLayerStage(Stage):
-    """Each page's embedded text, for triage and routing; reused from the inventory rather than re-read."""
-
-    def __init__(self, store: InventoryStore | None = None) -> None:
-        self.store = store
-
-    def run(self, item: WorkItem) -> WorkItem:
-        return replace(item, page_texts=read_text_layer(item.source, self.store))
-
-
-# Disabled: TriageStage and RouteStage.
+# Disabled: TextLayerStage (its text only fed triage and routing), TriageStage and RouteStage.
+#
+# def read_text_layer(source: PdfSource, store: InventoryStore | None = None) -> tuple[str, ...]:
+#     """The pypdf text layer, from the inventory when it holds this content, else read from the PDF."""
+#     texts = store.page_texts(source.hash_id) if store is not None else None
+#     if texts is None:
+#         texts = tuple(page.extract_text() or '' for page in PdfReader(source.path).pages)
+#     return texts
+#
+#
+# class TextLayerStage(Stage):
+#     """Each page's embedded text, for triage and routing; reused from the inventory rather than re-read."""
+#
+#     def __init__(self, store: InventoryStore | None = None) -> None:
+#         self.store = store
+#
+#     def run(self, item: WorkItem) -> WorkItem:
+#         return replace(item, page_texts=read_text_layer(item.source, self.store))
+#
+#
 #
 # class TriageStage(Stage):
 #     """Marks boilerplate pages so the parser skips them, reusing verdicts the inventory stored for these settings."""
@@ -97,13 +99,22 @@ class TextLayerStage(Stage):
 
 
 class ParseStage(Stage):
+    """Parses the source PDF, or, when triage skipped its tail, a copy truncated to the kept leading pages."""
+
     def __init__(self, parsers: Mapping[str, Parser]) -> None:
         if DEFAULT_ROUTE not in parsers:
             raise ValueError(f'ParseStage needs a {DEFAULT_ROUTE!r} parser')
         self.parsers = dict(parsers)
 
     def run(self, item: WorkItem) -> WorkItem:
-        return replace(item, document=self.parsers[item.route].parse(item.source, item.skip, item.page_texts))
+        parser = self.parsers[item.route]
+        if not item.skip:
+            return replace(item, document=parser.parse(item.source))
+        with tempfile.TemporaryDirectory() as tmp:
+            truncated = Path(tmp) / item.source.path.name  # same file name, so the document is named alike
+            truncate_pdf(item.source.path, item.skip, truncated)
+            parsed = parser.parse(item.source, truncated)
+        return replace(item, document=replace(parsed, skipped_pages=item.skip))
 
 
 # Disabled: PostprocessStage.

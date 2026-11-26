@@ -1,4 +1,8 @@
-"""Read the CVAT ground truth back as DoclingDocuments numbered like the source PDFs."""
+"""Read the CVAT ground truth back as DoclingDocuments numbered like the source PDFs.
+
+Annotated PDFs are tail-truncated copies (``inventory.truncate_pdf``): their pages are the source's leading pages, so
+the ground truth's page numbers are already the source's.
+"""
 
 from __future__ import annotations
 
@@ -6,8 +10,6 @@ import json
 import logging
 
 from docling_core.types.doc import DoclingDocument
-
-from parsing.parsers.model import renumber
 
 from .workspace import Workspace
 
@@ -17,7 +19,7 @@ Gold = tuple[str, DoclingDocument]  # (content hash of the source PDF, ground tr
 
 
 def load_gold(workspace: Workspace) -> dict[str, Gold]:
-    """Every annotated document in the workspace by doc_id, its pages renumbered to the source PDF's.
+    """Every annotated document in the workspace by doc_id, numbered like its source PDF.
 
     docling-eval names a record by file stem or by content hash depending on the stage, so both are matched.
     """
@@ -40,6 +42,11 @@ def load_gold(workspace: Workspace) -> dict[str, Gold]:
                 continue
             if doc_id in gold:
                 raise ValueError(f'{workspace.gold}: document {doc_id!r} appears twice')
-            truth = renumber(DoclingDocument.model_validate(json.loads(document)), documents[doc_id]['pages'])
+            pages = documents[doc_id]['pages']
+            if pages != list(range(1, len(pages) + 1)):
+                raise ValueError(
+                    f'{doc_id}: annotated pages {pages} are not the leading pages; prepare a new workspace'
+                )
+            truth = DoclingDocument.model_validate(json.loads(document))
             gold[doc_id] = (documents[doc_id]['hash_id'], truth)
     return gold

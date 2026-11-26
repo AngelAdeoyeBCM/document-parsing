@@ -9,9 +9,8 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
-from inventory import Inventory
+from inventory import Inventory, truncate_pdf
 from inventory.inventory import file_hash
-from parsing.parsers.model import write_subset
 from pipeline import RunConfig
 from pipeline.components import build_triage
 
@@ -73,7 +72,7 @@ def export_documents(config: RunConfig, workspace: Workspace, number: int, seed:
             raise ValueError(f'{source.relative_path}: another sampled document is also named {source.doc_id!r}')
         stored = inventory.store.triage(source.hash_id, triage.key) if triage else None
         target = workspace.sources / f'{source.doc_id}.pdf'
-        kept = write_subset(source.path, stored[1] if stored else frozenset(), target)
+        kept = truncate_pdf(source.path, stored[1] if stored else frozenset(), target)
         if not kept:
             target.unlink()
             continue

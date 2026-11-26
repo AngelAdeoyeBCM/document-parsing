@@ -22,7 +22,8 @@ from docling_core.transforms.visualizer.reading_order_visualizer import ReadingO
 from docling_core.types.doc import ContentLayer, DocItem, DocItemLabel, DoclingDocument, ImageRef, PictureItem, TextItem
 from PIL.Image import Image
 
-from ..core import ParsedDocument
+from parsing.core import ParsedDocument
+
 from .attachments import AttachmentVisualizer, attachments, unattached
 from .base import OverlayVisualizer
 from .pictures import PictureTextVisualizer, pdf_text_in_picture, picture_texts, texts_in_picture_box

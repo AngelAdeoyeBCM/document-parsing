@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 from conftest import DISCLOSURE
 
-from triage import FlaggedPolicy, PageVerdict, RuleClassifier, TailPolicy
+from triage import PageVerdict, RuleClassifier, TailPolicy
 
 FOOTER = 'Please refer to important information at the end of the report and MAR disclosures'
 ANALYSIS = (
@@ -74,7 +74,3 @@ def test_tail_policy_skips_one_block_to_the_end(flagged: set[int], expected: set
 
 def test_tail_policy_without_gaps_needs_a_contiguous_run() -> None:
     assert TailPolicy(keep_first=1, max_gap=0).skip(_verdicts(12, {9, 11})) == {11, 12}
-
-
-def test_flagged_policy_skips_each_flagged_page() -> None:
-    assert FlaggedPolicy(keep_first=1).skip(_verdicts(12, {1, 6, 9})) == {6, 9}

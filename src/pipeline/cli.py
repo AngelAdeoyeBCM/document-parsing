@@ -89,7 +89,7 @@ def _serialize(args: argparse.Namespace) -> int:
 
 
 def _visualize(args: argparse.Namespace) -> int:
-    from parsing.visualizer import visualize  # renders page images: only this command needs it
+    from visualizer import visualize  # renders page images: only this command needs it
 
     out = args.out or args.run_dir / 'visualizations'
     out.mkdir(parents=True, exist_ok=True)

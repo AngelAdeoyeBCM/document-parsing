@@ -10,12 +10,12 @@ from parsing.parsers import get_parser
 from .config import RunConfig
 from .manifest import RunManifest
 from .routing import DEFAULT_ROUTE
-from .stages import ParseStage, Stage, TextLayerStage, WorkItem, WriteStage
+from .stages import ParseStage, Stage, WorkItem, WriteStage
 
 # Disabled stages; restore these imports with them:
 # from .components import build_processor, build_triage
 # from .routing import Router, SparseTextRoute
-# from .stages import PostprocessStage, RouteStage, TriageStage
+# from .stages import PostprocessStage, RouteStage, TextLayerStage, TriageStage
 
 logger = logging.getLogger(__name__)
 
@@ -29,12 +29,12 @@ class Pipeline:
 
     @classmethod
     def from_config(cls, config: RunConfig, store: InventoryStore | None = None) -> Pipeline:
-        """``store``, when given, supplies the text layers the inventory already read."""
+        """``store`` supplies stored text layers and triage verdicts to the disabled text-layer and triage stages."""
         if config.triage or config.routes or config.postprocess:
             raise ValueError(
                 f'{config.name}: triage, routes and postprocess stages are disabled (commented out in pipeline/stages.py)'
             )
-        stages: list[Stage] = [TextLayerStage(store)]
+        stages: list[Stage] = []  # [TextLayerStage(store)] while triage or routes need page text
         # if config.triage:
         #     stages.append(TriageStage(build_triage(config.triage), store))
         base = config.parser

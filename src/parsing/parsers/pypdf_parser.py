@@ -1,13 +1,11 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Literal
 
 from docling_core.types.doc import BoundingBox, CoordOrigin, DocItemLabel, DoclingDocument, ProvenanceItem, Size
 from pypdf import PageObject, PdfReader
-
-from inventory import PdfSource
 
 from .base import Parser, ParserConfig
 
@@ -18,24 +16,17 @@ class PypdfConfig(ParserConfig):
 
 
 class PypdfParser(Parser):
-    """Baseline: the PDF text layer as one text item per page, with no structure.
-
-    Reuses the inventory's stored text (plain mode) when given it, so the baseline is exactly what triage saw.
-    """
+    """Baseline: the PDF text layer as one text item per page, with no structure."""
 
     name = 'pypdf'
     package = 'pypdf'
     config_cls = PypdfConfig
     config: PypdfConfig
 
-    def _convert(self, source: PdfSource, skip: frozenset[int], texts: Sequence[str]) -> DoclingDocument:
-        doc = DoclingDocument(name=source.doc_id)
-        pages = PdfReader(source.path).pages
-        stored = self.config.extraction_mode == 'plain' and len(texts) == len(pages)
-        for number, page in enumerate(pages, start=1):
-            if number not in skip:
-                text = texts[number - 1] if stored else page.extract_text(extraction_mode=self.config.extraction_mode)
-                self._add_page(doc, number, page, text.strip())
+    def _convert(self, path: Path) -> DoclingDocument:
+        doc = DoclingDocument(name=path.stem)  # named after the file, as Docling names its documents
+        for number, page in enumerate(PdfReader(path).pages, start=1):
+            self._add_page(doc, number, page, page.extract_text(extraction_mode=self.config.extraction_mode).strip())
         return doc
 
     @staticmethod

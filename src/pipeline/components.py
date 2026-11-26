@@ -13,7 +13,7 @@ from .config import ComponentSpec, TriageSpec
 
 
 def build_triage(spec: TriageSpec) -> Triage:
-    return Triage(policy=spec.policy, keep_first=spec.keep_first, min_share=spec.min_share)
+    return Triage(keep_first=spec.keep_first, min_share=spec.min_share)
 
 
 # def build_processor(spec: ComponentSpec) -> DocumentProcessor:

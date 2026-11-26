@@ -1,4 +1,5 @@
 from .inventory import BuildReport, Inventory, PdfSource
+from .pdf import truncate_pdf
 from .profiler import PROFILER_VERSION, PageProfile, PDFProfile, Profiler
 from .sampling import StratifiedSampler, Stratum
 from .store import InventoryStore
@@ -16,4 +17,5 @@ __all__ = [
     'StratifiedSampler',
     'Stratum',
     'Triage',
+    'truncate_pdf',
 ]

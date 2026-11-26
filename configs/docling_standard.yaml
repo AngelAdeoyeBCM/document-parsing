@@ -4,7 +4,6 @@ input:
   manifest: data/sample.txt
 output: outputs/docling_standard
 triage:
-  policy: tail  # skip one block ending at the last page; 'flagged' skips every flagged page
   keep_first: 1
   min_share: 0.3  # share of a prose page that must be disclosure wording
 parser:
