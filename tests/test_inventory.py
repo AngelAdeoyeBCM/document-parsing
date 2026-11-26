@@ -138,7 +138,8 @@ def test_sources_respect_the_manifest(tmp_path, make_pdf, reads):
     assert [source.doc_id for source in inventory.sources(manifest)] == ['a', 'c']
 
 
-def test_build_records_triage_verdicts(tmp_path, make_pdf):
+def test_build_records_triage_verdicts(tmp_path, make_pdf, caplog):
+    caplog.set_level('INFO', logger='inventory')
     make_pdf('corpus/note.pdf', [[TEXT], [TEXT], DISCLOSURE])
     inventory = Inventory(tmp_path / 'corpus', tmp_path / 'inventory.db')
     triage = Triage(policy='tail', keep_first=1)
@@ -155,6 +156,9 @@ def test_build_records_triage_verdicts(tmp_path, make_pdf):
         assert row.fetchone() == ('tail', '[3]', 1, 3)
 
     assert inventory.build(triage=triage).triaged == 0  # same settings and corpus: nothing to redo
+    assert 'triage 0 new, 1 already up to date' in caplog.text
+    inventory.build()
+    assert 'no triage settings given' in caplog.text
 
 
 def test_rules_triage_does_not_depend_on_corpus_changes(tmp_path, make_pdf):

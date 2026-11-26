@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import math
 from pathlib import Path
 
@@ -144,23 +143,3 @@ def test_compare_runs_writes_into_the_other_runs_evaluation(tmp_path: Path) -> N
     results = {row['stratum']: row for row in read_csv(path)}
     assert results['all']['documents'] == '2'  # the held-out document is left out
     assert float(results['garbled']['diff']) == pytest.approx(-0.1)
-
-
-def test_log_run_sends_params_metrics_and_files_to_mlflow(tmp_path: Path, monkeypatch) -> None:
-    mlflow = pytest.importorskip('mlflow')
-    from evaluation.tracking import log_run
-
-    run = tmp_path / 'docling_b0'
-    write_csv(_rows({('a', '1'): '0.2'}), run / EVALUATION_DIR / 'pages.csv')
-    (run / EVALUATION_DIR / 'params.json').write_text(json.dumps({'parser': 'docling', 'parser.do_ocr': False}))
-    (run / EVALUATION_DIR / 'metrics.json').write_text(json.dumps({'body.loss': 0.2, 'screen/body.loss': 0.2}))
-    (run / 'settings.json').write_text(json.dumps({'parser': {'name': 'docling'}}))
-    monkeypatch.setenv('MLFLOW_TRACKING_URI', (tmp_path / 'mlruns').as_uri())
-    monkeypatch.setenv('MLFLOW_ALLOW_FILE_STORE', 'true')  # a throwaway store; real use points at a server
-
-    logged = mlflow.get_run(log_run(run, 'test'))
-    assert logged.info.run_name == 'docling_b0'
-    assert logged.data.params == {'parser': 'docling', 'parser.do_ocr': 'False'}
-    assert logged.data.metrics == {'body.loss': 0.2, 'screen/body.loss': 0.2}
-    artifacts = {item.path for item in mlflow.MlflowClient().list_artifacts(logged.info.run_id)}
-    assert artifacts == {'evaluation', 'settings.json'}

@@ -15,12 +15,13 @@ dependencies = [
 docling = ["docling[rapidocr,easyocr,tesserocr]>=2.150"]
 annotation = ["docling-eval[cvat_tools]", "pyarrow"]  # `annotation prepare` and `collect` run docling-eval
 gold = ["pyarrow"]  # `evaluation score` reads the ground truth
-tracking = ["mlflow"]  # only `evaluation log` sends results to MLflow
+tracking = ["mlflow"]  # only `experiments log` sends results to MLflow
 
 [project.scripts]
 parsing = "parsing.cli:main"
 evaluation = "evaluation.cli:main"
 annotation = "annotation.cli:main"
+experiments = "experiments.cli:main"
 
 [dependency-groups]
 dev = ["ipykernel>=6", "pytest>=8", "ruff>=0.6"]
@@ -30,7 +31,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/parsing", "src/evaluation", "src/inventory", "src/triage", "src/annotation"]
+packages = ["src/parsing", "src/evaluation", "src/inventory", "src/triage", "src/annotation", "src/experiments"]
 
 [tool.ruff]
 line-length = 120

@@ -1,4 +1,4 @@
-"""Stage 1.1 evaluation: score parse runs against the annotated gold, compare them, and log them to MLflow."""
+"""Stage 1.1 evaluation: score parse runs against the annotated gold and compare them; ``experiments log`` logs them."""
 
 from __future__ import annotations
 
@@ -48,10 +48,6 @@ def _arguments() -> argparse.ArgumentParser:
     paired.add_argument('--seed', type=int, default=0)
     paired.set_defaults(handler=_compare)
 
-    log = commands.add_parser('log', help='log scored runs to MLflow, one MLflow run each')
-    log.add_argument('runs', type=Path, nargs='+')
-    log.add_argument('--experiment', default='stage-1.1')
-    log.set_defaults(handler=_log)
     return parser
 
 
@@ -78,12 +74,4 @@ def _compare(args: argparse.Namespace) -> int:
             float(r['diff']), float(r['low']), float(r['high']), r['documents'],
         )  # fmt: skip
     logger.info('written to %s', path)
-    return 0
-
-
-def _log(args: argparse.Namespace) -> int:
-    from .tracking import log_run
-
-    for run in args.runs:
-        logger.info('%s: logged as MLflow run %s', run.name, log_run(run, args.experiment))
     return 0

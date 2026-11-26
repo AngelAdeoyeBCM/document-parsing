@@ -1,0 +1,170 @@
+# Stage 1.1 experiment suite (docling_experiment_overview.md §3), reviewed in MLflow.
+#   uv run python -m experiments configs configs/experiments/stage_1_1.yaml E1   # write run configs
+#   uv run parsing run configs/stage_1_1/<run>.yaml                              # parse each one
+#   uv run python -m experiments log configs/experiments/stage_1_1.yaml E1       # score, compare, log
+# After review, set `winner:` on the experiment; later experiments change options on that winner.
+stage: '1.1'
+title: Text-only extraction
+aim: >-
+  The best text-only extraction. The body serializer keeps TEXT, PARAGRAPH, SECTION_HEADER, TITLE and
+  LIST_ITEM and drops tables, pictures, captions, footnotes, headers and footers; layout levers matter only
+  through their effect on that text. Primary metrics are loss rate and garble rate; leak rate is secondary;
+  separation rate shows the structural gain over pypdf.
+base_config: configs/docling_b0.yaml      # B0: STANDARD pipeline, Docling defaults except do_ocr=false
+references: [configs/pypdf_default.yaml]  # P0: pypdf full page text, in every table
+output: outputs/stage_1_1                 # variant runs: <output>/<id>_<variant>_<settings hash>
+configs: configs/stage_1_1                # generated run configs
+split: screen                             # 80 screening documents; the 20 held out wait for E9
+strata: data/strata.csv                   # doc_id,page,tags: multi_column, table_heavy, garbled, ...
+
+metrics:
+  extracted.garble_rate:
+    label: Garble rate
+    description: Share of words with U+FFFD, (cid:n), private-use characters or detached diacritics, in all output text.
+  extracted.dropped_text_rate:
+    label: Dropped-text rate
+    description: Share of text-layer words (pypdf) that appear in no output item.
+  body.loss:
+    label: Loss rate
+    gold: true
+    description: Share of gold body words missing from the body output (1 − word recall).
+  body.leak:
+    label: Leak rate
+    gold: true
+    description: Share of body output words not in the gold body text.
+  body.leak_excluded:
+    label: Leak of excluded text
+    gold: true
+    description: Leak that is gold table, figure, caption or furniture text.
+  body.leak_other:
+    label: Other leak
+    gold: true
+    description: Leak the gold page does not hold at all (noise, broken words).
+  body.separation:
+    label: Separation rate
+    better: higher
+    gold: true
+    description: Share of gold table and figure words kept out of the body output. pypdf scores near 0.
+  body.order_gap:
+    label: Order gap
+    gold: true
+    description: Order-insensitive word F1 minus order-sensitive score (1 − normalised word edit distance).
+  seconds_per_page:
+    label: Time per page
+    description: Parse seconds per page on the run's device.
+
+experiments:
+  - id: E0
+    title: Determinism check
+    pipeline_stage: Whole pipeline
+    target: A, C
+    question: Does a second B0 run reproduce the first? Differences here are the noise floor.
+    variants:
+      rerun: {}
+    metrics: [extracted.garble_rate, extracted.dropped_text_rate, body.loss, body.leak, seconds_per_page]
+
+  - id: E1
+    title: PDF backend
+    pipeline_stage: Preprocess
+    target: A
+    question: Does Docling's pypdfium2 backend garble or drop less text than docling-parse?
+    variants:
+      pypdfium2: {backend: pypdfium2}
+    metrics: [extracted.garble_rate, extracted.dropped_text_rate, body.loss, seconds_per_page]
+    winner: null
+
+  - id: E2
+    title: OCR x backend text
+    pipeline_stage: OCR, Layout
+    target: A
+    question: >-
+      Does OCR on broken text layers, or re-reading each element's text from the backend, cut garbling
+      without losing text? Report the garbled stratum separately.
+    notes: 2×2 grid; the control is the cell with OCR off and backend text off. OCR uses Docling's auto engine.
+    variants:
+      ocr: {do_ocr: true, replace_broken_text_layer: true}
+      backend_text: {overrides: {force_backend_text: true}}
+      ocr_backend_text: {do_ocr: true, replace_broken_text_layer: true, overrides: {force_backend_text: true}}
+    metrics: [extracted.garble_rate, body.loss, extracted.dropped_text_rate, seconds_per_page]
+    winner: null
+
+  - id: E3
+    title: Layout preset
+    pipeline_stage: Layout
+    target: C
+    question: Which layout model keeps the most body text with the least table and figure text leaking in?
+    variants:
+      heron_101: {layout_model: layout_heron_101}
+      egret_medium: {layout_model: layout_egret_medium}
+      egret_large: {layout_model: layout_egret_large}
+      egret_xlarge: {layout_model: layout_egret_xlarge}
+    metrics: [body.loss, body.leak, body.separation, seconds_per_page]
+    winner: null
+
+  - id: E4
+    title: Layout score threshold
+    pipeline_stage: Layout
+    target: C
+    question: How does the minimum detection confidence trade loss against leak on the E3 winner?
+    notes: Option path to verify against the installed Docling; a wrong path fails at parse time.
+    variants:
+      t0.2: {overrides: {layout_options.engine_options.score_threshold: 0.2}}
+      t0.4: {overrides: {layout_options.engine_options.score_threshold: 0.4}}
+      t0.5: {overrides: {layout_options.engine_options.score_threshold: 0.5}}
+    metrics: [body.loss, body.leak, body.separation]
+    winner: null
+
+  - id: E5
+    title: Layout postprocessing
+    pipeline_stage: Layout
+    target: A, C
+    question: Do orphan clusters or the layout postprocessor change dropped, lost or leaked text?
+    notes: Each option is toggled once, separately.
+    variants:
+      no_orphan_clusters: {overrides: {layout_options.create_orphan_clusters: false}}
+      no_postprocessor: {overrides: {layout_options.run_postprocessor: false}}
+    metrics: [extracted.dropped_text_rate, body.loss, body.leak]
+    winner: null
+
+  - id: E6
+    title: Table structure
+    pipeline_stage: Tables
+    target: Cost
+    question: >-
+      Can table structure be switched off for speed without table text falling back into the body?
+    variants:
+      no_table_structure: {overrides: {do_table_structure: false}}
+    metrics: [body.loss, body.leak, body.separation, seconds_per_page]
+    winner: null
+
+  - id: E7
+    title: Reading-order separators
+    pipeline_stage: Assemble
+    target: C
+    question: Do visible rules as reading-order signals reduce the order gap? No effect with pypdfium2.
+    variants:
+      no_separators: {use_reading_order_separators: false}
+    metrics: [body.order_gap, body.loss]
+    winner: null
+
+  - id: E8
+    title: Combine
+    pipeline_stage: Combine
+    target: A, C
+    question: Do the levers that beat the noise floor add up, or interact?
+    notes: Fill in once E1–E7 are reviewed. Full grid if 3 or fewer levers, else add one at a time.
+    variants: {}
+    metrics: [body.loss, extracted.garble_rate, body.leak, body.separation, seconds_per_page]
+    winner: null
+
+  - id: E9
+    title: Validate
+    pipeline_stage: Validate
+    target: A, C
+    question: Do the winner and runner-up hold on the 20 held-out documents?
+    notes: >-
+      Reuses runs already parsed, scored on the held-out split; list them as
+      `<name>: {from: <experiment id>.<variant>}`.
+    split: holdout
+    variants: {}
+    metrics: [body.loss, extracted.garble_rate, body.leak, body.separation, seconds_per_page]

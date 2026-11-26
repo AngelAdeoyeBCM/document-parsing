@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import logging
-from collections.abc import Collection, Iterable
+from collections.abc import Collection
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -111,13 +111,16 @@ class Inventory:
             if status != 'failed':
                 built[hash_id] = None
 
+        if triage is None:
+            logger.info('inventory: no triage settings given, pages not triaged')
         triaged = self._triage(built, triage) if triage is not None else 0
         return BuildReport(**counts, triaged=triaged)
 
-    def _triage(self, hash_ids: Iterable[str], triage: Triage) -> int:
+    def _triage(self, hash_ids: Collection[str], triage: Triage) -> int:
         """Classify from the stored text using the fixed page-local rules."""
         classifier, policy = triage.build_classifier(), triage.build_policy()
         pending = [hash_id for hash_id in hash_ids if self.store.triage_state(hash_id) != (triage.key, '')]
+        logger.info('inventory: triage %d new, %d already up to date', len(pending), len(hash_ids) - len(pending))
         if not pending:
             return 0
         for hash_id, texts in self.store.iter_page_texts(pending):
