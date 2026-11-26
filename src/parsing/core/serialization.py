@@ -3,6 +3,9 @@
 Parse runs and gold documents are serialized by the same name, so every comparison is like for like. A new
 serialization is one more entry in ``SERIALIZATIONS``: a docling serializer class and its parameters.
 ``serialize_elements`` splits the 'extracted' serialization by element kind, to trace problems such as garbling.
+
+A run saves only the lossless DoclingDocument JSON; every serialization is derived from it on demand
+(``DoclingDocument.load_from_json``), so serializations can be added or changed without parsing again.
 """
 
 from __future__ import annotations
@@ -28,6 +31,11 @@ _EXTRACTED_ONLY = {'enable_chart_tables': False, 'include_picture_classification
 class Serialization:
     serializer: type[DocSerializer]
     params: CommonParams
+
+    @property
+    def suffix(self) -> str:
+        # docling's plain-text serializer subclasses its Markdown one, so test for plain text.
+        return '.txt' if issubclass(self.serializer, PlainTextDocSerializer) else '.md'
 
     def pages(self, doc: DoclingDocument) -> dict[int, str]:
         """The serialized text of each page that has any."""
@@ -56,13 +64,24 @@ SERIALIZATIONS: dict[str, Serialization] = {
 }
 
 
-def serialize(doc: DoclingDocument, name: str = 'body') -> dict[int, str]:
-    """Text per page under the named serialization."""
+def get_serialization(name: str) -> Serialization:
     try:
-        serialization = SERIALIZATIONS[name]
+        return SERIALIZATIONS[name]
     except KeyError:
         raise KeyError(f'unknown serialization {name!r}; available: {sorted(SERIALIZATIONS)}') from None
-    return serialization.pages(doc)
+
+
+def serialize(doc: DoclingDocument, name: str = 'body') -> dict[int, str]:
+    """Text per page under the named serialization."""
+    return get_serialization(name).pages(doc)
+
+
+def serialize_document(doc: DoclingDocument, name: str = 'body') -> str:
+    """The whole document under the named serialization, each page after a ``<!-- page N -->`` marker.
+
+    The markers let a chunker recover page numbers; between them is exactly the text that is scored.
+    """
+    return '\n\n'.join(f'<!-- page {number} -->\n\n{text}' for number, text in serialize(doc, name).items())
 
 
 def serialize_elements(doc: DoclingDocument) -> dict[str, dict[int, str]]:

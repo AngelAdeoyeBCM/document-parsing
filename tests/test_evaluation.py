@@ -26,7 +26,7 @@ from evaluation import (
     split,
 )
 from evaluation.score import EVALUATION_DIR, means, read_csv, write_csv
-from parsing.core import serialize, serialize_elements
+from parsing.core import SERIALIZATIONS, serialize, serialize_document, serialize_elements
 
 
 def _prov(page: int = 1) -> ProvenanceItem:
@@ -58,6 +58,9 @@ def test_serializations_are_docling_serializers_filtered_by_label_and_layer() ->
     assert lines('markdown')[0] == '# Copper outlook' and '<!-- image -->' in lines('markdown')
     with pytest.raises(KeyError, match='available'):
         serialize(doc, 'nope')
+    whole = serialize_document(doc, 'body')  # one file per document: each page after a marker
+    assert whole.startswith('<!-- page 1 -->\n\nCopper outlook') and '<!-- page 2 -->\n\nSecond page heading' in whole
+    assert (SERIALIZATIONS['body'].suffix, SERIALIZATIONS['markdown'].suffix) == ('.txt', '.md')
 
     elements = serialize_elements(doc)  # 'extracted', one element kind at a time
     assert set(elements) == {'caption', 'page_footer', 'picture_text', 'section_header', 'table', 'text', 'title'}

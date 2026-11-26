@@ -6,8 +6,9 @@ from dataclasses import replace
 
 from docling_core.types.doc import DoclingDocument, PictureItem, RefItem
 
-from ..core import CHART_CLASSES, ParsedDocument, picture_class
+from ..core import ParsedDocument
 from .base import DocumentProcessor, ProcessResult
+from .pictures import CHART_CLASSES, picture_class
 
 
 class ChartFilter(DocumentProcessor):

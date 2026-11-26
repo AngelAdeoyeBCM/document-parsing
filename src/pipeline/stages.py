@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field, replace
 from pathlib import Path
 
@@ -10,9 +10,9 @@ from pypdf import PdfReader
 from inventory import InventoryStore, PdfSource
 from parsing.core import ParsedDocument
 from parsing.parsers import Parser
-from parsing.render import Renderer
 from triage import PageVerdict
 
+from .manifest import save_document
 from .routing import DEFAULT_ROUTE
 
 # Disabled stages (Stage 1.1 runs are TextLayer -> Parse -> Write); restore these imports with them:
@@ -124,10 +124,10 @@ class ParseStage(Stage):
 
 
 class WriteStage(Stage):
-    def __init__(self, renderers: Sequence[Renderer], out_dir: Path) -> None:
-        self.renderers = tuple(renderers)
+    """Saves the lossless DoclingDocument JSON; serializations and visualizations are derived from it on demand."""
+
+    def __init__(self, out_dir: Path) -> None:
         self.out_dir = out_dir
 
     def run(self, item: WorkItem) -> WorkItem:
-        document = item.require_document()
-        return replace(item, outputs=tuple(renderer.write(document, self.out_dir) for renderer in self.renderers))
+        return replace(item, outputs=(save_document(item.require_document(), self.out_dir),))

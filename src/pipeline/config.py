@@ -23,9 +23,6 @@ class ComponentSpec:
         return cls(raw['name'], dict(raw.get('options') or {}))
 
 
-DEFAULT_RENDERERS = (ComponentSpec('json'), ComponentSpec('proof'))
-
-
 @dataclass(frozen=True, slots=True)
 class InputSpec:
     directory: Path  # root of the extracted corpus
@@ -58,11 +55,10 @@ class RunConfig:
     triage: TriageSpec | None = None
     routes: tuple[RouteSpec, ...] = ()
     postprocess: tuple[ComponentSpec, ...] = ()
-    renderers: tuple[ComponentSpec, ...] = DEFAULT_RENDERERS
 
     @property
     def settings(self) -> dict[str, Any]:
-        """What decides the parsed output (not the input or the renderers), as plain JSON values."""
+        """What decides the parsed output (not the input), as plain JSON values."""
         settings = {
             'parser': asdict(self.parser),
             'triage': asdict(self.triage) if self.triage else None,
@@ -79,7 +75,6 @@ class RunConfig:
     def from_dict(cls, raw: Mapping[str, Any]) -> RunConfig:
         source = raw['input']
         triage = raw.get('triage')
-        renderers = raw.get('renderers')
         return cls(
             name=raw['name'],
             input=InputSpec(
@@ -101,7 +96,6 @@ class RunConfig:
                 for route in raw.get('routes') or ()
             ),
             postprocess=tuple(ComponentSpec.parse(item) for item in raw.get('postprocess') or ()),
-            renderers=tuple(ComponentSpec.parse(item) for item in renderers) if renderers else DEFAULT_RENDERERS,
         )
 
 

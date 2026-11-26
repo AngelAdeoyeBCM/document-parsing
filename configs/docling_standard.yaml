@@ -23,6 +23,3 @@ routes:
     options: {do_ocr: true, ocr_engine: rapidocr, rapidocr_backend: torch}
 postprocess:
   - chart_filter  # drop every picture not classified as a chart (logos, icons, photos)
-renderers:
-  - json
-  - proof

@@ -7,7 +7,6 @@ from functools import reduce
 from inventory import InventoryStore, PdfSource
 from parsing.parsers import get_parser
 
-from .components import build_renderer
 from .config import RunConfig
 from .manifest import RunManifest
 from .routing import DEFAULT_ROUTE
@@ -46,7 +45,7 @@ class Pipeline:
         stages.append(ParseStage(parsers))
         # if config.postprocess:
         #     stages.append(PostprocessStage([build_processor(spec) for spec in config.postprocess]))
-        stages.append(WriteStage([build_renderer(spec) for spec in config.renderers], config.output))
+        stages.append(WriteStage(config.output))
         return cls(stages, manifest=RunManifest(config.output))
 
     def run(self, sources: Sequence[PdfSource], corpus: Sequence[PdfSource] | None = None) -> Iterator[WorkItem]:

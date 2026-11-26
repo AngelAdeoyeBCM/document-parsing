@@ -9,6 +9,7 @@ from conftest import DISCLOSURE
 from evaluation import evaluate_run
 from evaluation.score import read_csv
 from inventory import Inventory
+from parsing.core import serialize_document
 from pipeline import Pipeline, RunConfig, RunManifest, stages
 from pipeline.cli import main
 
@@ -34,7 +35,7 @@ def test_pipeline_writes_outputs_and_scores(tmp_path: Path, make_pdf) -> None:
 
     items = list(Pipeline.from_config(config).run(sources))
     assert items[0].skip == frozenset()  # no triage: every page is parsed
-    assert {path.suffix for path in items[0].outputs} == {'.json', '.html'}
+    assert [path.name for path in items[0].outputs] == ['note.json']  # a run saves only the lossless JSON
 
     log = [json.loads(line) for line in (config.output / 'run.jsonl').read_text().splitlines()]
     assert log[0]['status'] == 'ok' and log[0]['skipped_pages'] == []
@@ -42,8 +43,6 @@ def test_pipeline_writes_outputs_and_scores(tmp_path: Path, make_pdf) -> None:
     [document] = RunManifest(config.output).documents()
     assert document.skipped_pages == frozenset()
     assert document.source.relative_path == 'bnp/note.pdf'
-    proof = (config.output / 'note.html').read_text()
-    assert proof.count('class="page"') == 3 and 'skipped by triage' not in proof
 
     truth = document.document.model_copy(deep=True)
     truth.pages = {1: truth.pages[1]}  # ground truth holds only the annotated pages
@@ -65,6 +64,27 @@ def test_pipeline_writes_outputs_and_scores(tmp_path: Path, make_pdf) -> None:
 
     other_file = evaluate_run(config.output, inventory.store, {'note': ('not this file', truth)})
     assert json.loads((other_file / 'params.json').read_text())['gold_pages'] == 0  # gold from another file
+
+
+def test_serializations_and_visualizations_come_from_a_saved_run(tmp_path: Path, make_pdf) -> None:
+    make_pdf('raw/bnp/note.pdf', [['Copper outlook 2025'], ['More analysis']])
+    config = _config(tmp_path)
+    Inventory(config.input.directory, tmp_path / 'inventory.db').build()
+    list(Pipeline.from_config(config).run(Inventory(config.input.directory, tmp_path / 'inventory.db').sources()))
+    [document] = RunManifest(config.output).documents()
+
+    assert main(['serialize', str(config.output), '--serialization', 'body']) == 0
+    body = (config.output / 'serializations' / 'body' / 'note.txt').read_text(encoding='utf-8')
+    assert body == serialize_document(document.document, 'body')  # exactly the scored text, with page markers
+    assert body.startswith('<!-- page 1 -->') and '<!-- page 2 -->' in body
+    assert main(['serialize', str(config.output), '--serialization', 'markdown']) == 0
+    assert (config.output / 'serializations' / 'markdown' / 'note.md').is_file()
+
+    assert main(['visualize', str(config.output), '--reading-order']) == 0
+    page = (config.output / 'visualizations' / 'note.html').read_text(encoding='utf-8')
+    assert page.count('<section class="page">') == 2 and page.count('data:image/png') == 2
+    assert page.count('class="box"') == page.count('class="item"') == 2  # one text item per pypdf page
+    assert 'Copper outlook 2025' in page
 
 
 def test_pipeline_reuses_inventory_text(tmp_path: Path, make_pdf, monkeypatch) -> None:

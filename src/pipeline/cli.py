@@ -6,6 +6,7 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from inventory import Inventory, PdfSource
+from parsing.core import SERIALIZATIONS, serialize_document
 from parsing.parsers import available
 
 from .components import build_triage
@@ -52,7 +53,51 @@ def _arguments() -> argparse.ArgumentParser:
 
     parsers = commands.add_parser('parsers', help='list available parsers')
     parsers.set_defaults(handler=_parsers)
+
+    serialize = commands.add_parser('serialize', help='write a named serialization of every document in a run')
+    serialize.add_argument('run_dir', type=Path)
+    serialize.add_argument('--serialization', default='body', choices=sorted(SERIALIZATIONS))
+    serialize.add_argument('--out', type=Path, help='default: <run dir>/serializations/<serialization>')
+    serialize.set_defaults(handler=_serialize)
+
+    visualize = commands.add_parser('visualize', help='write an interactive review page per document in a run')
+    visualize.add_argument('run_dir', type=Path)
+    visualize.add_argument('--doc', action='append', help='doc_id to visualize; repeatable (default: all)')
+    visualize.add_argument('--out', type=Path, help='default: <run dir>/visualizations')
+    visualize.add_argument('--reading-order', action='store_true', help='draw the reading order over the boxes')
+    visualize.add_argument('--labels', action='store_true', help="draw each box's label on the page image")
+    visualize.add_argument('--scale', type=float, default=1.5, help='page image pixels per PDF point')
+    visualize.set_defaults(handler=_visualize)
     return parser
+
+
+def _serialize(args: argparse.Namespace) -> int:
+    serialization = SERIALIZATIONS[args.serialization]
+    out = args.out or args.run_dir / 'serializations' / args.serialization
+    out.mkdir(parents=True, exist_ok=True)
+    count = 0
+    for parsed in RunManifest(args.run_dir).documents():
+        path = out / f'{parsed.source.doc_id}{serialization.suffix}'
+        path.write_text(serialize_document(parsed.document, args.serialization), encoding='utf-8')
+        count += 1
+    logger.info('%d documents as %r into %s', count, args.serialization, out)
+    return 0
+
+
+def _visualize(args: argparse.Namespace) -> int:
+    from parsing.visualizer import visualize  # renders page images: only this command needs it
+
+    out = args.out or args.run_dir / 'visualizations'
+    out.mkdir(parents=True, exist_ok=True)
+    count = 0
+    for parsed in RunManifest(args.run_dir).documents():
+        if args.doc and parsed.source.doc_id not in args.doc:
+            continue
+        page = visualize(parsed, scale=args.scale, reading_order=args.reading_order, labels=args.labels)
+        (out / f'{parsed.source.doc_id}.html').write_text(page, encoding='utf-8')
+        count += 1
+    logger.info('%d documents visualized into %s', count, out)
+    return 0
 
 
 def _parsers(_: argparse.Namespace) -> int:

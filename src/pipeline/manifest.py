@@ -4,14 +4,30 @@ import json
 from collections.abc import Iterator, Mapping
 from pathlib import Path
 from types import MappingProxyType
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from docling_core.types.doc import DoclingDocument
+from docling_core.types.doc import DoclingDocument, ImageRefMode
 
 from inventory import PdfSource
 from parsing.core import ParsedDocument, ParserInfo
 
-from .stages import WorkItem
+if TYPE_CHECKING:
+    from .stages import WorkItem
+
+
+def document_path(run_dir: Path, doc_id: str) -> Path:
+    """Where a run keeps a document's DoclingDocument JSON."""
+    return run_dir / f'{doc_id}.json'
+
+
+def save_document(parsed: ParsedDocument, run_dir: Path) -> Path:
+    """The lossless DoclingDocument JSON that evaluation reads back; figures go to ``<doc_id>_artifacts/``."""
+    run_dir.mkdir(parents=True, exist_ok=True)
+    path = document_path(run_dir, parsed.source.doc_id)
+    # A relative artifacts dir is resolved against the JSON's folder, and images are linked relatively.
+    artifacts = Path(f'{parsed.source.doc_id}_artifacts')
+    parsed.document.save_as_json(path, artifacts, image_mode=ImageRefMode.REFERENCED, ensure_ascii=False)
+    return path
 
 
 class RunManifest:
@@ -74,13 +90,13 @@ class RunManifest:
         source = PdfSource.from_path(record['path'], **record['metadata'])
         if source.hash_id != record['hash_id']:
             raise ValueError(f'{source.doc_id}: {source.path} has changed since it was parsed')
-        json_name = next(name for name in record['outputs'] if name.endswith('.json'))
         parser = record['parser']
+        path = document_path(self.run_dir, record['doc_id'])
         return ParsedDocument(
             source=source,
             parser=ParserInfo(parser['name'], parser['version'], MappingProxyType(parser['config'])),
             # Our own run outputs, so their referenced figure files are trusted.
-            document=DoclingDocument.load_from_json(self.run_dir / json_name, allow_local_images=True),
+            document=DoclingDocument.load_from_json(path, allow_local_images=True),
             skipped_pages=frozenset(record['skipped_pages']),
             seconds=record['seconds'],
         )
