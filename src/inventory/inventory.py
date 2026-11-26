@@ -180,24 +180,19 @@ class Inventory:
 
     def sample(
         self,
+        number: int,
         *,
-        number: int | None = None,
-        per_stratum: int | None = None,
         seed: int = 0,
         text_quality: tuple[str, ...] | None = None,
         include_ocr: bool | None = None,
-        page_bands: tuple[int, ...] = (5, 15, 40),
         within: Collection[str] | None = None,
     ) -> list[str]:
+        """``number`` documents balanced over the sampler's strata; ``include_ocr`` False drops scans, True keeps only them."""
         from .sampling import StratifiedSampler
 
-        return StratifiedSampler(
-            self.store,
-            number=number,
-            per_stratum=per_stratum,
-            seed=seed,
-            page_bands=page_bands,
-        ).sample(text_quality=text_quality, do_ocr=include_ocr, within=within)
+        return StratifiedSampler(self.store).sample(
+            number, seed=seed, text_quality=text_quality, do_ocr=include_ocr, within=within
+        )
 
 
 def _manifest_paths(manifest: Path) -> list[str]:

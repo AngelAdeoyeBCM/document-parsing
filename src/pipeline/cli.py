@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import argparse
 import logging
+from collections import Counter
 from collections.abc import Sequence
 from pathlib import Path
 
-from inventory import Inventory, PdfSource
+from inventory import Inventory, PdfSource, StratifiedSampler, Stratum
 from parsing.core import SERIALIZATIONS, serialize_document
 from parsing.parsers import available
 
@@ -38,16 +39,19 @@ def _arguments() -> argparse.ArgumentParser:
     inventory.add_argument('--config', type=Path, help="run config whose 'triage:' block to apply while profiling")
     inventory.set_defaults(handler=_inventory)
 
-    sample = commands.add_parser('sample', help='draw a manifest from a SQLite inventory')
+    sample = commands.add_parser('sample', help='draw a manifest balanced over length, text density and imagery')
     sample.add_argument('--directory', type=Path, required=True)
     sample.add_argument('--database', type=Path, required=True)
-    sample.add_argument(
-        '--per-stratum', type=int, default=None, help='legacy per-stratum limit; ignored when --number is set'
-    )
     sample.add_argument('--seed', type=int, default=0)
     sample.add_argument('--out', type=Path, required=True)
     sample.add_argument(
         '--number', '--count', dest='number', type=int, default=50, help='total number of full PDFs to sample'
+    )
+    sample.add_argument(
+        '--ocr',
+        choices=('include', 'exclude', 'only'),
+        default='include',
+        help='scanned documents that need OCR: sample them too, never, or only them',
     )
     sample.set_defaults(handler=_sample)
 
@@ -132,15 +136,18 @@ def _inventory(args: argparse.Namespace) -> int:
 
 
 def _sample(args: argparse.Namespace) -> int:
-    inventory = Inventory(args.directory, args.database)
-    chosen = inventory.sample(
-        number=args.number if args.per_stratum is None else None,
-        per_stratum=args.per_stratum,
-        seed=args.seed,
-    )
+    sampler = StratifiedSampler(Inventory(args.directory, args.database).store)
+    do_ocr = {'include': None, 'exclude': False, 'only': True}[args.ocr]
+    chosen = sampler.sample(args.number, seed=args.seed, do_ocr=do_ocr)
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(''.join(f'{relative_path}\n' for relative_path in chosen), encoding='utf-8')
-    logger.info('wrote %d documents to %s', len(chosen), args.out)
+    groups = sampler.strata(do_ocr=do_ocr, within=set(chosen))
+    logger.info('wrote %d documents from %d strata to %s', len(chosen), len(groups), args.out)
+    for axis, name in enumerate(Stratum._fields):
+        counts = Counter({stratum[axis]: 0 for stratum in groups})
+        for stratum, members in groups.items():
+            counts[stratum[axis]] += len(members)
+        logger.info('  %-8s %s', name, ', '.join(f'{level} {count}' for level, count in sorted(counts.items())))
     return 0
 
 

@@ -263,16 +263,29 @@ class InventoryStore:
             ).fetchall()
 
     def sampling_rows(
-        self, text_quality: Iterable[str] | None = None, do_ocr: bool | None = None
-    ) -> list[tuple[str, str, int, int, str, int]]:
-        """Full-document strata rows with original and triage-adjusted page counts."""
+        self, text_quality: Iterable[str] | None = None, do_ocr: bool | None = None, image_page_coverage: float = 0.25
+    ) -> list[tuple[str, int, float, float, float, bool]]:
+        """``(relative_path, kept_pages, chars_per_page, image_coverage, image_page_share, do_ocr)`` per document.
+
+        Measured over the pages triage keeps; ``image_page_share`` counts kept pages at least ``image_page_coverage``
+        covered by drawn images.
+        """
         clause, params = where(text_quality, do_ocr)
         with self.transaction() as connection:
-            return connection.execute(
-                f'SELECT hash_id, relative_path, pages, n_triage_pages, text_quality, do_ocr '
-                f'FROM documents WHERE {clause}',
-                params,
+            rows = connection.execute(
+                f"""SELECT d.relative_path, count(p.page_number), coalesce(sum(p.text_chars), 0),
+                           coalesce(sum(p.image_coverage), 0), coalesce(sum(p.image_coverage >= ?), 0), d.do_ocr
+                    FROM documents d
+                    LEFT JOIN pages p ON p.hash_id = d.hash_id
+                         AND p.page_number NOT IN (SELECT value FROM json_each(coalesce(d.skip_pages, '[]')))
+                    WHERE {clause}
+                    GROUP BY d.hash_id""",
+                [image_page_coverage, *params],
             ).fetchall()
+        return [
+            (path, kept, chars / max(kept, 1), coverage / max(kept, 1), heavy / max(kept, 1), bool(ocr))
+            for path, kept, chars, coverage, heavy, ocr in rows
+        ]
 
     # -- page text -----------------------------------------------------------------------------------------------
 

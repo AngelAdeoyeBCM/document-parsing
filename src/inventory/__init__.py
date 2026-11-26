@@ -1,6 +1,6 @@
 from .inventory import BuildReport, Inventory, PdfSource
 from .profiler import PROFILER_VERSION, PageProfile, PDFProfile, Profiler
-from .sampling import StratifiedSampler
+from .sampling import StratifiedSampler, Stratum
 from .store import InventoryStore
 from triage import Triage
 
@@ -14,5 +14,6 @@ __all__ = [
     'PdfSource',
     'Profiler',
     'StratifiedSampler',
+    'Stratum',
     'Triage',
 ]

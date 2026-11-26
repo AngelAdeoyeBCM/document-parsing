@@ -6,7 +6,7 @@ import pytest
 from conftest import DISCLOSURE, Image
 
 import inventory.profiler as profiler_module
-from inventory import Inventory
+from inventory import Inventory, StratifiedSampler
 from triage import Triage
 
 TEXT = 'Enough meaningful text on this page to exceed the configured sparse threshold for embedded text'
@@ -170,34 +170,29 @@ def test_rules_triage_does_not_depend_on_corpus_changes(tmp_path, make_pdf):
 
 
 def test_stratified_sample_is_deterministic(tmp_path, make_pdf):
-    for index in range(6):
-        make_pdf(f'corpus/{index}.pdf', [[f'{TEXT} {index}']])
-    inventory = Inventory(tmp_path / 'corpus', tmp_path / 'inventory.db')
-    inventory.build()
-    first = inventory.sample(per_stratum=2, seed=7)
-    assert len(first) == 2
-    assert inventory.sample(per_stratum=2, seed=7) == first
-
-
-def test_numbered_stratified_sample_is_deterministic(tmp_path, make_pdf):
     for index in range(12):
-        make_pdf(f'corpus/{index}.pdf', [[f'{TEXT} {index}']])
+        make_pdf(f'corpus/{index}.pdf', [[f'{TEXT} {index}']] * (1 + index % 5))
     inventory = Inventory(tmp_path / 'corpus', tmp_path / 'inventory.db')
     inventory.build()
 
-    first = inventory.sample(number=5, seed=29)
+    first = inventory.sample(5, seed=29)
     assert len(first) == 5
-    assert inventory.sample(number=5, seed=29) == first
+    assert inventory.sample(5, seed=29) == first
+    assert len(inventory.sample(50)) == 12  # never more than the corpus
 
 
-def test_sample_uses_kept_page_count_for_length_bands(tmp_path, make_pdf):
-    # 7 pages, 3 of them disclosures: band 1 (6-15 pages) as a whole, band 0 (up to 5) once triage drops the tail.
-    make_pdf('corpus/trimmed.pdf', [[TEXT]] * 4 + [DISCLOSURE] * 3)
+def test_sample_measures_kept_pages_only(tmp_path, make_pdf):
+    # 5 pages, 2 of them disclosures: medium (4-10 pages) as a whole, short (1-3) once triage drops the tail.
+    make_pdf('corpus/trimmed.pdf', [[TEXT]] * 3 + [DISCLOSURE] * 2)
     make_pdf('corpus/short.pdf', [[TEXT]] * 3)
     plain = Inventory(tmp_path / 'corpus', tmp_path / 'plain.db')
     plain.build()
     triaged = Inventory(tmp_path / 'corpus', tmp_path / 'triaged.db')
     triaged.build(triage=Triage(policy='tail', keep_first=1))
 
-    assert len(plain.sample(per_stratum=1)) == 2  # different bands
-    assert len(triaged.sample(per_stratum=1)) == 1  # same band after triage
+    def lengths(inventory: Inventory) -> dict[str, str]:
+        groups = StratifiedSampler(inventory.store).strata()
+        return {member.relative_path: stratum.length for stratum, members in groups.items() for member in members}
+
+    assert lengths(plain) == {'trimmed.pdf': 'medium', 'short.pdf': 'short'}
+    assert lengths(triaged) == {'trimmed.pdf': 'short', 'short.pdf': 'short'}
