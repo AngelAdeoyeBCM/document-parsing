@@ -8,6 +8,8 @@ from .base import PageVerdict
 from .policy import FlaggedPolicy, TailPolicy
 from .rules import RuleClassifier
 
+RULES_VERSION = 2  # 2: prose pages scored by disclosure share; bump to invalidate stored verdicts
+
 
 @dataclass(frozen=True, slots=True)
 class Triage:
@@ -15,7 +17,7 @@ class Triage:
 
     policy: str = 'tail'
     keep_first: int = 1
-    min_hits: int = 3
+    min_share: float = 0.3
 
     def __post_init__(self) -> None:
         if self.policy not in ('tail', 'flagged'):
@@ -24,12 +26,12 @@ class Triage:
     @property
     def key(self) -> str:
         return json.dumps(
-            {'policy': self.policy, 'keep_first': self.keep_first, 'min_hits': self.min_hits},
+            {'policy': self.policy, 'keep_first': self.keep_first, 'min_share': self.min_share, 'rules': RULES_VERSION},
             sort_keys=True,
         )
 
     def build_classifier(self) -> RuleClassifier:
-        return RuleClassifier(min_hits=self.min_hits)
+        return RuleClassifier(min_share=self.min_share)
 
     def build_policy(self) -> FlaggedPolicy | TailPolicy:
         policy = FlaggedPolicy if self.policy == 'flagged' else TailPolicy

@@ -10,6 +10,24 @@ from pypdf.generic import ArrayObject, DecodedStreamObject, DictionaryObject, Fl
 
 PAGE_WIDTH, PAGE_HEIGHT = 612, 792
 
+# A disclosure page as the triage rules see one: over 150 words of prose, mostly disclaimer wording.
+DISCLOSURE = [
+    'Important disclosures and analyst certification',
+    'This report has been prepared by the research desk for professional clients and eligible counterparties only.',
+    'It does not constitute investment advice and is not an offer or solicitation to buy or sell any security.',
+    'Past performance is not indicative of future results and the value of investments may go down as well as up.',
+    'The information herein is believed to be reliable but no representation or warranty is given as to accuracy.',
+    'Opinions may change without notice and the bank accepts no liability for any loss arising from its use.',
+    'The bank and its affiliates may have positions in the securities mentioned and may have conflicts of interest.',
+    'This document may not be reproduced or redistributed to any recipient without prior written consent.',
+    'It is not intended for distribution in any jurisdiction where such distribution would be contrary to law.',
+    'The bank is authorised by the regulator and regulated by the Financial Conduct Authority in the United Kingdom.',
+    'Recipients should seek their own advice before making any decision on the basis of this material.',
+    'All rights reserved, and the research is non-independent for the purposes of the applicable rules.',
+    'Further regulatory disclosures, including the distribution of ratings, are available on request from the desk.',
+    'Investors should consider whether the products described are suitable for them in light of their objectives.',
+]
+
 
 @dataclass(frozen=True)
 class Image:

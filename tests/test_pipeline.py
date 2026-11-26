@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 import pytest
+from conftest import DISCLOSURE
 
 from evaluation import evaluate_run
 from evaluation.score import read_csv
@@ -11,12 +12,6 @@ from inventory import Inventory
 from parsing.cli import main
 from parsing.pipeline import Pipeline, RunConfig, RunManifest, stages
 from parsing.pipeline.components import build_triage
-
-DISCLOSURE = [
-    'Important disclosures and analyst certification',
-    'This report has been prepared by the research desk',
-    'Past performance is not a guide to future returns',
-]
 
 
 def _config(tmp_path: Path) -> RunConfig:
@@ -26,7 +21,7 @@ def _config(tmp_path: Path) -> RunConfig:
             'input': {'directory': str(tmp_path / 'raw')},
             'output': str(tmp_path / 'out'),
             'parser': {'name': 'pypdf'},
-            'triage': {'policy': 'tail', 'keep_first': 1, 'min_hits': 3},
+            'triage': {'policy': 'tail', 'keep_first': 1, 'min_share': 0.3},
         }
     )
 

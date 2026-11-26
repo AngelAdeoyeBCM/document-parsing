@@ -37,7 +37,7 @@ class InputSpec:
 class TriageSpec:
     policy: str = 'tail'  # how flagged pages become skipped pages
     keep_first: int = 1  # cover pages are never dropped
-    min_hits: int = 3
+    min_share: float = 0.3  # share of a prose page's text that must be disclosure wording
 
 
 @dataclass(frozen=True, slots=True)
@@ -92,7 +92,7 @@ class RunConfig:
             triage=TriageSpec(
                 policy=triage.get('policy', 'tail'),
                 keep_first=triage.get('keep_first', 1),
-                min_hits=triage.get('min_hits', 3),
+                min_share=triage.get('min_share', 0.3),
             )
             if triage
             else None,

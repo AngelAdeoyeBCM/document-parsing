@@ -29,14 +29,22 @@ class FlaggedPolicy(SkipPolicy):
 class TailPolicy(SkipPolicy):
     """One block ending at the final page: from the start of the last flagged run through to the end.
 
-    Flags on pages 6, 9 and 11 of 12 skip 11-12; flags on 9-11 of 12 skip 9-12.
+    The run may bridge up to ``max_gap`` unflagged pages, such as a ratings table inside a disclosure appendix, and
+    never starts within the first ``keep_first`` pages. With ``max_gap=1``, flags on 6, 9 and 11 of 12 skip 9-12;
+    flags on 6 and 11 skip 11-12.
     """
 
+    def __init__(self, keep_first: int = 1, max_gap: int = 1) -> None:
+        super().__init__(keep_first)
+        self.max_gap = max_gap
+
     def _select(self, verdicts: Sequence[PageVerdict]) -> set[int]:
-        flagged = {verdict.page for verdict in verdicts if verdict.boilerplate}
+        flagged = sorted(verdict.page for verdict in verdicts if verdict.boilerplate and verdict.page > self.keep_first)
         if not flagged:
             return set()
-        start = max(flagged)
-        while start - 1 in flagged:
-            start -= 1
+        start = flagged[-1]
+        for page in reversed(flagged[:-1]):
+            if start - page - 1 > self.max_gap:
+                break
+            start = page
         return set(range(start, len(verdicts) + 1))

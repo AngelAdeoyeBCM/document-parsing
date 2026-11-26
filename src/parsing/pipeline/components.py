@@ -14,7 +14,7 @@ RENDERERS: Mapping[str, type[Renderer]] = {'json': JsonRenderer, 'markdown': Mar
 
 
 def build_triage(spec: TriageSpec) -> Triage:
-    return Triage(policy=spec.policy, keep_first=spec.keep_first, min_hits=spec.min_hits)
+    return Triage(policy=spec.policy, keep_first=spec.keep_first, min_share=spec.min_share)
 
 
 def build_renderer(spec: ComponentSpec) -> Renderer:

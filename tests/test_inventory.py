@@ -3,18 +3,13 @@ from __future__ import annotations
 import sqlite3
 
 import pytest
-from conftest import Image
+from conftest import DISCLOSURE, Image
 
 import inventory.profiler as profiler_module
 from inventory import Inventory
 from triage import Triage
 
 TEXT = 'Enough meaningful text on this page to exceed the configured sparse threshold for embedded text'
-DISCLOSURE = [
-    'Important disclosures and analyst certification',
-    'This report has been prepared by the research desk',
-    'Past performance is not a guide to future returns',
-]
 
 
 @pytest.fixture

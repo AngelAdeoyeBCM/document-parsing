@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 import pytest
+from conftest import DISCLOSURE
 from docling_core.types.doc import BoundingBox, DocItemLabel, DoclingDocument, ProvenanceItem, Size
 from pypdf import PdfReader
 
@@ -14,11 +15,6 @@ from parsing.core import serialize
 from parsing.pipeline import RunConfig
 
 TEXT = 'Enough meaningful text on this page to count as an embedded text layer, well past fifty characters'
-DISCLOSURE = [
-    'Important disclosures and analyst certification',
-    'This report has been prepared by the research desk',
-    'Past performance is not a guide to future returns',
-]
 
 
 def _config(tmp_path: Path, make_pdf) -> RunConfig:
@@ -34,7 +30,7 @@ def _config(tmp_path: Path, make_pdf) -> RunConfig:
             'input': {'directory': str(tmp_path / 'raw'), 'manifest': str(manifest)},
             'output': str(tmp_path / 'out'),
             'parser': {'name': 'pypdf'},
-            'triage': {'policy': 'tail', 'keep_first': 1, 'min_hits': 3},
+            'triage': {'policy': 'tail', 'keep_first': 1, 'min_share': 0.3},
         }
     )
 
