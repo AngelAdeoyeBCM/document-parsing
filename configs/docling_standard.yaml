@@ -9,7 +9,6 @@ triage:
 parser:
   name: docling
   options:
-    device: cuda:1
     layout_model: layout_egret_xlarge
     do_ocr: false
     table_mode: accurate

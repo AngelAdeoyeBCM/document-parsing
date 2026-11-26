@@ -190,3 +190,9 @@ def test_run_resumes_and_refuses_changed_settings_in_the_same_directory(tmp_path
     config.write_text(json.dumps(changed))
     with pytest.raises(ValueError, match='other settings'):
         main(['run', str(config)])
+
+
+def test_device_is_not_a_setting() -> None:
+    raw = {'name': 'b0', 'input': {'directory': 'storage'}, 'output': 'out', 'parser': {'name': 'docling'}}
+    pinned = raw | {'parser': {'name': 'docling', 'options': {'device': 'cuda:2'}}}
+    assert RunConfig.from_dict(pinned).settings == RunConfig.from_dict(raw).settings

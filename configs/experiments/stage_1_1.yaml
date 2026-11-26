@@ -1,6 +1,6 @@
 # Stage 1.1 experiment suite (docling_experiment_overview.md §3), reviewed in MLflow.
 #   uv run python -m experiments configs configs/experiments/stage_1_1.yaml E1   # write run configs
-#   uv run pipeline run configs/stage_1_1/<run>.yaml                             # parse each one
+#   uv run python -m experiments run configs/experiments/stage_1_1.yaml E1       # parse them, one run per free GPU
 #   uv run python -m experiments log configs/experiments/stage_1_1.yaml E1       # score, compare, log
 # After review, set `winner:` on the experiment; later experiments change options on that winner.
 stage: '1.1'

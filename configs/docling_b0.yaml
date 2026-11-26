@@ -8,7 +8,6 @@ output: outputs/docling_b0
 parser:
   name: docling
   options:
-    device: cuda:1  # run every Stage 1.1 config on this one device so time per page is comparable
     layout_model: layout_heron_default
     do_ocr: false
     images_scale: 1.0

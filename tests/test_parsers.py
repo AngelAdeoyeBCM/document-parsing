@@ -6,6 +6,7 @@ from types import SimpleNamespace
 import pytest
 
 from inventory import PdfSource, truncate_pdf
+from parsing import gpus
 from parsing.core import ParsedDocument, ParserInfo
 from parsing.parsers import get_parser
 from parsing.parsers.docling_standard import set_options
@@ -63,3 +64,13 @@ def test_registry_builds_configured_parser() -> None:
         get_parser('nope')
     with pytest.raises(TypeError):
         get_parser('pypdf', {'unknown_option': 1})
+
+
+def test_auto_device_takes_the_visible_gpu_with_most_free_memory(monkeypatch) -> None:
+    monkeypatch.setattr(gpus, 'gpu_memory', lambda: {0: (100, 400), 1: (300, 400), 2: (200, 400)})
+    monkeypatch.delenv('CUDA_VISIBLE_DEVICES', raising=False)
+    assert gpus.auto_device() == 'cuda:1'
+    monkeypatch.setenv('CUDA_VISIBLE_DEVICES', '0,2')
+    assert gpus.auto_device() == 'cuda:1'  # physical GPU 2, second of those visible
+    monkeypatch.setenv('CUDA_VISIBLE_DEVICES', '')
+    assert gpus.auto_device() == 'auto'

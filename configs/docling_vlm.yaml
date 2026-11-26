@@ -9,5 +9,4 @@ triage:
 parser:
   name: docling-vlm
   options:
-    device: cuda:3
     model: GRANITEDOCLING_TRANSFORMERS

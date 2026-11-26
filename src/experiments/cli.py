@@ -1,7 +1,8 @@
 """Experiment suite for one stage, reviewed in MLflow.
 
 1. ``experiments configs <spec> [E1 ...]`` writes a run config for every variant and prints the parse commands.
-2. Run them with ``pipeline run <config> [--shard i/n]``, on as many devices as you like.
+2. ``experiments run <spec> [E1 ...]`` parses the base config, references and variants, one run per free GPU at a
+   time (or run ``pipeline run <config> [--shard i/n]`` yourself; it takes the GPU with the most free memory).
 3. ``experiments log <spec> [E1 ...]`` scores new runs, compares every row with its control and logs each
    experiment to its own MLflow experiment (``stage-<stage>/<id> <title>``), with a stage overview alongside.
 4. Review, set ``winner:`` in the spec, and repeat for the next experiment, which builds on that winner.
@@ -11,10 +12,17 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
+import subprocess
+import sys
 from collections.abc import Sequence
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from queue import Empty, SimpleQueue
 
 import yaml
+
+from parsing.gpus import free_gpus
 
 from .spec import Spec
 
@@ -38,6 +46,13 @@ def _arguments() -> argparse.ArgumentParser:
     configs.add_argument('ids', nargs='*', help='experiment ids (default: all)')
     configs.set_defaults(handler=_configs)
 
+    run = commands.add_parser('run', help='parse every run the experiments compare, one per free GPU at a time')
+    run.add_argument('spec', type=Path)
+    run.add_argument('ids', nargs='*', help='experiment ids (default: all)')
+    run.add_argument('--gpus', help='comma-separated GPU indices as nvidia-smi numbers them (default: every free one)')
+    run.add_argument('--min-free', type=float, default=0.5, help='share of its memory a GPU needs free to be used')
+    run.set_defaults(handler=_run)
+
     log = commands.add_parser('log', help='score, compare and log experiments to MLflow')
     log.add_argument('spec', type=Path)
     log.add_argument('ids', nargs='*', help='experiment ids (default: all)')
@@ -49,8 +64,14 @@ def _arguments() -> argparse.ArgumentParser:
 
 
 def _configs(args: argparse.Namespace) -> int:
-    spec = Spec.load(args.spec)
-    for experiment in _chosen(spec, args.ids):
+    _write_configs(Spec.load(args.spec), args.ids)
+    return 0
+
+
+def _write_configs(spec: Spec, ids: Sequence[str]) -> list[Path]:
+    """Write each variant's run config, print its parse command and return the configs."""
+    paths = []
+    for experiment in _chosen(spec, ids):
         for variant in experiment.variants:
             if variant.source:
                 continue  # reuses another experiment's run
@@ -60,7 +81,46 @@ def _configs(args: argparse.Namespace) -> int:
             path.write_text(yaml.safe_dump(dict(arm.raw), sort_keys=False), encoding='utf-8')
             state = 'parsed' if arm.parsed else 'to parse'
             print(f'{experiment.id} {variant.name} ({state}): pipeline run {path.as_posix()}')
-    return 0
+            paths.append(path)
+    return paths
+
+
+def _run(args: argparse.Namespace) -> int:
+    spec = Spec.load(args.spec)
+    # Finished runs return at once: `pipeline run` only parses the documents a run directory lacks.
+    configs = list(dict.fromkeys([spec.base_config, *spec.references, *_write_configs(spec, args.ids)]))
+    gpus = args.gpus.split(',') if args.gpus else [str(index) for index in free_gpus(args.min_free)]
+    if not gpus:
+        raise SystemExit(f'no GPU has {args.min_free:.0%} of its memory free; pass --gpus or a lower --min-free')
+    logs = spec.output / 'logs'
+    logs.mkdir(parents=True, exist_ok=True)
+    queue: SimpleQueue[Path] = SimpleQueue()
+    for config in configs:
+        queue.put(config)
+    failed: list[Path] = []
+
+    def work(gpu: str) -> None:
+        env = {**os.environ, 'CUDA_DEVICE_ORDER': 'PCI_BUS_ID', 'CUDA_VISIBLE_DEVICES': gpu}
+        while True:
+            try:
+                config = queue.get_nowait()
+            except Empty:
+                return
+            log = logs / f'{config.stem}.log'
+            logger.info('GPU %s: %s (log %s)', gpu, config, log)
+            with open(log, 'a', encoding='utf-8') as handle:
+                command = [sys.executable, '-m', 'pipeline', 'run', str(config)]
+                run = subprocess.run(command, check=False, env=env, stdout=handle, stderr=subprocess.STDOUT)
+            code = run.returncode
+            if code:
+                failed.append(config)
+                logger.error('GPU %s: %s exited with %d, see %s', gpu, config, code, log)
+
+    logger.info('%d runs over GPUs %s', len(configs), ', '.join(gpus))
+    with ThreadPoolExecutor(len(gpus)) as pool:
+        list(pool.map(work, gpus))
+    logger.info('%d of %d runs finished', len(configs) - len(failed), len(configs))
+    return 1 if failed else 0
 
 
 def _log(args: argparse.Namespace) -> int:

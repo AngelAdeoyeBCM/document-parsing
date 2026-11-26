@@ -8,6 +8,8 @@ from typing import Any
 
 import yaml
 
+RUNTIME_OPTIONS = frozenset({'device'})  # where a run executes, not what it outputs
+
 
 @dataclass(frozen=True, slots=True)
 class ComponentSpec:
@@ -57,11 +59,11 @@ class RunConfig:
 
     @property
     def settings(self) -> dict[str, Any]:
-        """What decides the parsed output (not the input), as plain JSON values."""
+        """What decides the parsed output (not the input or the device), as plain JSON values."""
         settings = {
-            'parser': asdict(self.parser),
+            'parser': {'name': self.parser.name, 'options': _output_options(self.parser.options)},
             'triage': asdict(self.triage) if self.triage else None,
-            'routes': [asdict(route) for route in self.routes],
+            'routes': [{**asdict(route), 'options': _output_options(route.options)} for route in self.routes],
             'postprocess': [asdict(spec) for spec in self.postprocess],
         }
         return json.loads(json.dumps(settings, default=str))
@@ -99,3 +101,7 @@ class RunConfig:
 
 def _path(value: str | None) -> Path | None:
     return Path(value) if value else None
+
+
+def _output_options(options: Mapping[str, Any]) -> dict[str, Any]:
+    return {key: value for key, value in options.items() if key not in RUNTIME_OPTIONS}

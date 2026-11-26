@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+import logging
 from abc import abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Literal
 
@@ -14,14 +15,17 @@ from docling.datamodel.base_models import InputFormat
 from docling.document_converter import DocumentConverter, PdfFormatOption
 from docling_core.types.doc import DoclingDocument
 
+from ..gpus import auto_device
 from .base import Parser, ParserConfig
+
+logger = logging.getLogger(__name__)
 
 _BACKENDS = {'docling_parse': ThreadedDoclingParseDocumentBackend, 'pypdfium2': PyPdfiumDocumentBackend}
 
 
 @dataclass(frozen=True, slots=True)
 class DoclingConfig(ParserConfig):
-    device: str = 'cuda'  # 'cpu', 'cuda' or 'cuda:N'
+    device: str = 'auto'  # 'auto' (the GPU with the most free memory when the parser is built), 'cpu', 'cuda:N'
     num_threads: int = 4
     backend: Literal['docling_parse', 'pypdfium2'] = 'docling_parse'  # how the PDF's text and pages are read
     images_scale: float = 2.0
@@ -39,7 +43,11 @@ class DoclingParser(Parser):
     config: DoclingConfig
 
     def __init__(self, config: DoclingConfig | None = None) -> None:
+        config = config if config is not None else self.config_cls()
+        if isinstance(config, DoclingConfig) and config.device == 'auto':
+            config = replace(config, device=auto_device())  # recorded with each document
         super().__init__(config)
+        logger.info('%s runs on %s', self.name, self.config.device)
         self._converter = DocumentConverter(format_options={InputFormat.PDF: self._format_option()})
         self._converter.initialize_pipeline(InputFormat.PDF)
 

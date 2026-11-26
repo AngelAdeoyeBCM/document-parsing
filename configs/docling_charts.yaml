@@ -9,7 +9,6 @@ triage:
 parser:
   name: docling
   options:
-    device: cuda:2
     heading_hierarchy: true
     classify_pictures: true
     extract_charts: true
