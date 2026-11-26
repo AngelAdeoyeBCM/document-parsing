@@ -13,8 +13,7 @@ dependencies = [
 
 [project.optional-dependencies]
 docling = ["docling[rapidocr,easyocr,tesserocr]>=2.153"]
-# `annotation prepare` and `collect` run the docling-eval command, installed as a separate tool, not in this environment:
-# its docling-cvat-tools needs Pillow below 12 (uv tool install "docling-eval[cvat_tools]").
+annotation = ["docling-eval[cvat_tools]", "pyarrow"]  # `annotation prepare` and `collect` run docling-eval
 gold = ["pyarrow"]  # `evaluation score` and `experiments log` read the ground truth
 tracking = ["mlflow"]  # only `experiments log` sends results to MLflow
 
@@ -34,6 +33,9 @@ required-environments = [
     "sys_platform == 'win32' and platform_machine == 'AMD64'",
     "sys_platform == 'linux' and platform_machine == 'x86_64'",
 ]
+# docling-cvat-tools (annotation extra) caps Pillow below 12, but Nexus quarantines those Pillow files (all Linux
+# builds, most Windows ones). Its CVAT round trip (`annotation prepare` and `collect`) runs on Pillow 13.
+override-dependencies = ["pillow>=12"]
 
 [build-system]
 requires = ["hatchling"]

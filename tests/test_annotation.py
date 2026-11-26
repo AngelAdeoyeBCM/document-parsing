@@ -11,6 +11,21 @@ from annotation import Workspace, collect, load_gold, prepare
 from parsing.core import serialize
 
 
+def test_docling_eval_cli_stubs_the_modules_docling_ibm_models_4_removed(monkeypatch) -> None:
+    import sys
+
+    from annotation.docling_eval_cli import REMOVED, _stub_removed_modules
+
+    monkeypatch.setattr(sys, 'modules', dict(sys.modules))  # the stubs leave with the test
+    _stub_removed_modules()
+    from docling_ibm_models.layoutmodel.labels import LayoutLabels  # what docling-eval imports at start
+
+    for path in REMOVED:
+        assert path in sys.modules
+    with pytest.raises(RuntimeError, match='docling-ibm-models < 4'):
+        LayoutLabels()  # fails only when used
+
+
 def test_tasks_lists_each_cvat_tasks_split(tmp_path: Path, capsys) -> None:
     from annotation.cli import main
     from evaluation import split

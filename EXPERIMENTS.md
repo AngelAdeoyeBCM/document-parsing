@@ -58,39 +58,50 @@ command below runs from the repository root.
 
 ### First time on a Linux machine
 
-uv installs itself to `~/.local/bin`, which may not be on your `PATH`, and it needs the system certificates to
-trust the internal Nexus server. Set both once, for every future shell:
+uv's standalone installer puts it in `~/.local/bin`, which may not be on your `PATH`. Add it once, for every
+future shell:
 
 ```bash
-echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc && echo 'export UV_SYSTEM_CERTS=true' >> ~/.bashrc
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc && source ~/.bashrc
 ```
 
+Then give uv the same user config the Windows workstations have (`%APPDATA%\uv\uv.toml`): the internal Nexus
+index, and the system certificates, which are what trust Nexus's certificate:
+
 ```bash
-source ~/.bashrc
+mkdir -p ~/.config/uv && printf 'index-url = "https://nexus.bluecrest.local/repository/pypi-group/simple"\nsystem-certs = true\n' > ~/.config/uv/uv.toml
 ```
 
 ### The project
 
-Install the project with every extra: Docling for parsing, pyarrow for reading the gold, MLflow for tracking.
+Install the project with every extra: Docling for parsing, docling-eval for annotation, pyarrow for reading the
+gold, MLflow for tracking. The lockfile is the same for Linux and Windows, so both get the same versions:
 
 ```bash
 uv sync --all-extras
 ```
 
-### docling-eval, for preparing and collecting annotation
+### Which machine for what
 
-`annotation prepare` and `annotation collect` run the `docling-eval` command. It is installed as a separate uv
-tool, with its own environment, because its CVAT tools need Pillow below 12, and the project uses Pillow 12 or
-later:
+| Step | Linux | Windows |
+|:-----|:-----:|:-------:|
+| Inventory, dataset, parse runs, scoring, MLflow, `annotation tasks` | yes | yes (parsing is faster on the GPU box) |
+| `annotation prepare` and `annotation collect` | yes | **no** |
+| Correcting annotations in CVAT | in the browser, from anywhere | |
 
-```bash
-uv tool install "docling-eval[cvat_tools]"
-```
+docling-eval, which `prepare` and `collect` run, does not work on Windows: it stores image references as paths,
+which Windows writes with backslashes, and then splits them on `/`. Both commands say so if run there. Every
+other step works on both, and all of them read and write the same folders, so share `data/annotation/` (or keep
+the repository on a shared drive) to switch freely between machines.
 
-> **Blocked on Nexus for now.** Nexus quarantines every Pillow below 12, so this install fails on machines that
-> use it, until Pillow 11.3.0 is released from quarantine or docling-cvat-tools accepts Pillow 12. Only these two
-> annotation commands need docling-eval: parsing, scoring and MLflow are unaffected, and CVAT itself runs
-> elsewhere.
+Two compatibility fixes keep docling-eval in the same environment as the parser
+([pyproject.toml](pyproject.toml), [docling_eval_cli.py](src/annotation/docling_eval_cli.py)):
+
+- **Pillow.** docling-eval's CVAT tools ask for Pillow below 12, which Nexus quarantines, so the project overrides
+  that to Pillow 12 or later.
+- **docling-ibm-models.** docling-eval 1.4.2 imports two modules that the docling-ibm-models version Docling 2.153
+  needs no longer has. Only two docling-eval evaluators we never run use them, so `annotation` starts docling-eval
+  with those modules stubbed.
 
 ## 2. Build the inventory
 
@@ -139,7 +150,7 @@ documents have been annotated.
 
 ## 4. Annotate, on a rolling basis
 
-### Prepare the CVAT tasks (once)
+### Prepare the CVAT tasks (once, on Linux)
 
 ```bash
 uv run python -m annotation prepare
@@ -182,7 +193,7 @@ task_01  holdout+screen   20 pages from 4 documents
    Export the task's annotations as **CVAT for images 1.1** and save the zip in
    `data/annotation/cvat/cvat_annotations/zips/`.
 
-### Collect the gold (after each batch of exports)
+### Collect the gold (after each batch of exports, on Linux)
 
 ```bash
 uv run python -m annotation collect
@@ -443,8 +454,10 @@ Without the file, comparisons are over all pages only, and `experiments log` say
 | `... already holds a dataset` | Use a new `--out` folder, or move the old dataset (section 3) |
 | `no dataset in data/annotation` | Run `pipeline dataset` before `annotation prepare` |
 | `uv: command not found` | `~/.local/bin` is not on your `PATH` (section 1) |
-| Certificate error downloading from Nexus | Set `UV_SYSTEM_CERTS=true`, or pass `--system-certs` (section 1) |
-| `docling-eval is not installed` | `uv tool install "docling-eval[cvat_tools]"` (section 1) |
+| Certificate error downloading from Nexus | Add `system-certs = true` to uv's user config, or pass `--system-certs` (section 1) |
+| `docling-eval is not installed` | `uv sync --all-extras` (section 1) |
+| `docling-eval does not work on Windows` | Run `annotation prepare` and `collect` on the Linux machine (section 1) |
+| HTTP 403 downloading a package | Nexus has quarantined that file; ask the security team, or see whether another platform's build is served |
 | `no CVAT export in .../zips` | Export at least one task's zip into `cvat/cvat_annotations/zips/` |
 | `document ... appears twice` (scoring) | An earlier collect left files behind: delete `data/annotation/gold/` and run `annotation collect` again |
 | `no GPU has 50% of its memory free` | Wait, lower `--min-free`, or pass `--gpus` |

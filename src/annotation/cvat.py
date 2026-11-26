@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+import importlib.util
 import logging
-import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 from .workspace import Workspace
@@ -44,14 +45,16 @@ def collect(workspace: Workspace) -> Path:
 
 
 def _docling_eval(*args: object) -> None:
-    executable = shutil.which('docling-eval')
-    if executable is None:
+    """docling-eval's command line, in this environment, through ``docling_eval_cli`` (see there for why)."""
+    if sys.platform == 'win32':
         raise SystemExit(
-            'docling-eval is not installed; install it as a tool (its own environment, as it needs Pillow below 12): '
-            'uv tool install "docling-eval[cvat_tools]"'
+            'docling-eval does not work on Windows: it stores image references as paths, which Windows writes with '
+            "backslashes, then splits them on '/'. Run annotation prepare and collect on the Linux machine."
         )
+    if importlib.util.find_spec('docling_eval') is None:
+        raise SystemExit('docling-eval is not installed; install the annotation extra: uv sync --all-extras')
     logger.info('docling-eval %s', ' '.join(map(str, args)))
-    subprocess.run([executable, *map(str, args)], check=True)
+    subprocess.run([sys.executable, '-m', 'annotation.docling_eval_cli', *map(str, args)], check=True)
 
 
 def _expect_parquet(directory: Path) -> Path:
