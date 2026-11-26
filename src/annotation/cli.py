@@ -15,7 +15,7 @@ import logging
 from collections.abc import Sequence
 from pathlib import Path
 
-from parsing.pipeline import RunConfig
+from pipeline import RunConfig
 
 from .cvat import collect, prepare
 from .workspace import Workspace

@@ -1,17 +1,10 @@
 from .config import ComponentSpec, InputSpec, RouteSpec, RunConfig, TriageSpec
 from .manifest import RunManifest
 from .pipeline import Pipeline
-from .routing import DEFAULT_ROUTE, Route, Router, SparseTextRoute
-from .stages import (
-    ParseStage,
-    PostprocessStage,
-    RouteStage,
-    Stage,
-    TextLayerStage,
-    TriageStage,
-    WorkItem,
-    WriteStage,
-)
+from .routing import DEFAULT_ROUTE
+from .stages import ParseStage, Stage, TextLayerStage, WorkItem, WriteStage
+
+# Disabled: Route, Router, SparseTextRoute, RouteStage, TriageStage, PostprocessStage (see stages.py).
 
 __all__ = [
     'DEFAULT_ROUTE',
@@ -19,18 +12,12 @@ __all__ = [
     'InputSpec',
     'ParseStage',
     'Pipeline',
-    'PostprocessStage',
-    'Route',
     'RouteSpec',
-    'RouteStage',
-    'Router',
     'RunConfig',
     'RunManifest',
-    'SparseTextRoute',
     'Stage',
     'TextLayerStage',
     'TriageSpec',
-    'TriageStage',
     'WorkItem',
     'WriteStage',
 ]

@@ -3,10 +3,13 @@
 ``<run dir>/evaluation/`` holds ``pages.csv`` (one row per parsed page), ``metrics.json`` (means, overall and per
 split) and ``params.json`` (the parser, its settings and the serializations scored). One parse run is one MLflow run.
 
-Text quality is measured on the 'extracted' serialization (everything the parser read), overall and per element
-kind (``extracted.garble_rate.caption``, ``.page_footer``, ``.picture_text``, ...) to show where garbling comes from.
-Each serialization scored against gold (``parsing.core.SERIALIZATIONS``) gets columns prefixed with its name, e.g.
-``body.loss``.
+A. Text quality is measured on the 'extracted' serialization (everything the parser read), overall and per element
+kind (``extracted.garble_rate.caption``, ``.page_footer``, ``.picture_text``, ...) to show where garbling comes from;
+on gold pages ``extracted.loss`` is the word loss against the gold full-page text.
+B. Layout, on gold pages: ``layout.f1`` (and ``layout.f1.<label>``) from the labelled boxes, and the targeted
+confusions ``layout.leak_from.<group>`` and ``layout.loss_to.<group>``.
+C. Serializer: each serialization scored against gold (``parsing.core.SERIALIZATIONS``) gets columns prefixed with
+its name, e.g. ``body.loss``.
 """
 
 from __future__ import annotations
@@ -23,14 +26,14 @@ from typing import Any
 from annotation import Gold
 from inventory import InventoryStore
 from parsing.core import serialize, serialize_elements
-from parsing.pipeline import RunManifest
+from pipeline import RunManifest
 
-from .metrics import dropped_text_rate, garble_rate, gold_metrics
+from .metrics import CONFUSION_GROUPS, dropped_text_rate, garble_rate, gold_metrics, label_confusions, layout_f1
 
 logger = logging.getLogger(__name__)
 
 EVALUATION_DIR = 'evaluation'
-HOLDOUT_SHARE = 0.2  # documents held out of screening (E1-E8) until validation (E9)
+HOLDOUT_SHARE = 0.2  # documents held out of screening (E1-E7) until validation (E8)
 DEFAULT_SERIALIZATIONS = ('body', 'body_tables')
 _KEYS = ('doc_id', 'page', 'split')
 
@@ -54,7 +57,7 @@ def evaluate_run(
     ``gold`` is ``annotation.load_gold``'s result; the pages a gold document holds are scored under each of
     ``serializations``, run and gold serialized alike.
     """
-    names = ('extracted', *serializations)
+    names = tuple(dict.fromkeys(('extracted', 'body', *serializations)))  # 'body' for the layout confusions
     rows: list[Row] = []
     documents = gold_pages = 0
     parser: dict[str, object] = {}
@@ -86,6 +89,16 @@ def evaluate_run(
                     row[f'extracted.garble_rate.{kind}'] = garble_rate(pages[number])
             if truth and number in truth['pages']:
                 gold_pages += 1
+                full = gold_metrics(truth['extracted'].get(number, ''), '', output)
+                if full:
+                    row['extracted.loss'] = full['loss']
+                layout = layout_f1(truth['document'], parsed.document, number) | label_confusions(
+                    truth['body'].get(number, ''),
+                    _groups(truth['elements'], number),
+                    text['body'].get(number, ''),
+                    _groups(elements, number),
+                )
+                row |= {f'layout.{metric}': value for metric, value in layout.items()}
                 for name in serializations:
                     expected, everything = truth[name].get(number, ''), truth['extracted'].get(number, '')
                     scores = gold_metrics(expected, everything, text[name].get(number, ''))
@@ -145,7 +158,20 @@ def _gold_text(gold: Mapping[str, Gold], doc_id: str, hash_id: str, names: Seque
     if source_hash != hash_id:
         logger.warning('%s: gold was annotated on a different file; its pages are not scored', doc_id)
         return None
-    return {'pages': set(document.pages)} | {name: serialize(document, name) for name in names}
+    return {
+        'pages': set(document.pages),
+        'document': document,
+        'elements': serialize_elements(document),
+        **{name: serialize(document, name) for name in names},
+    }
+
+
+def _groups(elements: Mapping[str, Mapping[int, str]], page: int) -> dict[str, str]:
+    """The page's text in each targeted-confusion group, from ``serialize_elements``."""
+    return {
+        group: '\n'.join(elements.get(kind, {}).get(page, '') for kind in kinds)
+        for group, kinds in CONFUSION_GROUPS.items()
+    }
 
 
 def _parser_params(name: str, version: str, config: Mapping[str, object]) -> dict[str, object]:

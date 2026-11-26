@@ -3,13 +3,14 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 from typing import Any
 
+from parsing.render import JsonRenderer, MarkdownRenderer, ProofRenderer, Renderer
 from triage import Triage
 
-from ..postprocess import ChartFilter, DocumentProcessor
-from ..render import JsonRenderer, MarkdownRenderer, ProofRenderer, Renderer
 from .config import ComponentSpec, TriageSpec
 
-PROCESSORS: Mapping[str, type[DocumentProcessor]] = {'chart_filter': ChartFilter}
+# Disabled with PostprocessStage; restore with it:
+# from parsing.postprocess import ChartFilter, DocumentProcessor
+# PROCESSORS: Mapping[str, type[DocumentProcessor]] = {'chart_filter': ChartFilter}
 RENDERERS: Mapping[str, type[Renderer]] = {'json': JsonRenderer, 'markdown': MarkdownRenderer, 'proof': ProofRenderer}
 
 
@@ -21,8 +22,8 @@ def build_renderer(spec: ComponentSpec) -> Renderer:
     return _build(RENDERERS, spec)
 
 
-def build_processor(spec: ComponentSpec) -> DocumentProcessor:
-    return _build(PROCESSORS, spec)
+# def build_processor(spec: ComponentSpec) -> DocumentProcessor:
+#     return _build(PROCESSORS, spec)
 
 
 def _build(table: Mapping[str, Callable[..., Any]], spec: ComponentSpec) -> Any:

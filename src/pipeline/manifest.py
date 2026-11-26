@@ -9,8 +9,8 @@ from typing import Any
 from docling_core.types.doc import DoclingDocument
 
 from inventory import PdfSource
+from parsing.core import ParsedDocument, ParserInfo
 
-from ..core import ParsedDocument, ParserInfo
 from .stages import WorkItem
 
 

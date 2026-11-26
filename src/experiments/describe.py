@@ -132,8 +132,10 @@ def _changes(spec: Spec, experiment: Experiment, result: ArmResult) -> str:
 
 
 def _metrics(metrics: dict) -> str:
-    rows = [[_code(i.column), i.label, i.better, 'yes' if i.gold else 'no', i.description] for i in metrics.values()]
-    return _table(['column', 'metric', 'better', 'needs gold', 'definition'], rows)
+    """Metric glossary rows, grouped by target (A text quality, B layout, C serializer)."""
+    ordered = sorted(metrics.values(), key=lambda i: i.target or '~')  # stable: spec order within a target
+    rows = [[i.target, _code(i.column), i.label, i.better, 'yes' if i.gold else 'no', i.description] for i in ordered]
+    return _table(['target', 'column', 'metric', 'better', 'needs gold', 'definition'], rows)
 
 
 def _interval(row: dict | None) -> str:

@@ -12,8 +12,8 @@ from typing import Any
 from inventory import Inventory
 from inventory.inventory import file_hash
 from parsing.parsers.model import write_subset
-from parsing.pipeline import RunConfig
-from parsing.pipeline.components import build_triage
+from pipeline import RunConfig
+from pipeline.components import build_triage
 
 from .workspace import Workspace
 

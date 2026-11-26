@@ -5,15 +5,20 @@ from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field, replace
 from pathlib import Path
 
-from inventory import InventoryStore, PdfSource
-from triage import PageVerdict, Triage, run_triage
 from pypdf import PdfReader
 
-from ..core import ParsedDocument
-from ..parsers import Parser
-from ..postprocess import DocumentProcessor
-from ..render import Renderer
-from .routing import DEFAULT_ROUTE, Router
+from inventory import InventoryStore, PdfSource
+from parsing.core import ParsedDocument
+from parsing.parsers import Parser
+from parsing.render import Renderer
+from triage import PageVerdict
+
+from .routing import DEFAULT_ROUTE
+
+# Disabled stages (Stage 1.1 runs are TextLayer -> Parse -> Write); restore these imports with them:
+# from parsing.postprocess import DocumentProcessor
+# from triage import Triage, run_triage
+# from .routing import Router
 
 
 @dataclass(frozen=True, slots=True)
@@ -61,32 +66,34 @@ class TextLayerStage(Stage):
         return replace(item, page_texts=read_text_layer(item.source, self.store))
 
 
-class TriageStage(Stage):
-    """Marks boilerplate pages so the parser skips them, reusing verdicts the inventory stored for these settings."""
-
-    def __init__(self, triage: Triage, store: InventoryStore | None = None) -> None:
-        self.triage = triage
-        self.store = store
-        self.classifier = triage.build_classifier()
-        self.policy = triage.build_policy()
-
-    def run(self, item: WorkItem) -> WorkItem:
-        stored = self._stored(item.source)
-        verdicts, skip = stored if stored is not None else run_triage(self.classifier, self.policy, item.page_texts)
-        return replace(item, skip=skip, verdicts=verdicts)
-
-    def _stored(self, source: PdfSource) -> tuple[tuple[PageVerdict, ...], frozenset[int]] | None:
-        return self.store.triage(source.hash_id, self.triage.key) if self.store is not None else None
-
-
-class RouteStage(Stage):
-    """Chooses which parser configuration handles the document, e.g. OCR for image-only PDFs."""
-
-    def __init__(self, router: Router) -> None:
-        self.router = router
-
-    def run(self, item: WorkItem) -> WorkItem:
-        return replace(item, route=self.router.route(item.page_texts))
+# Disabled: TriageStage and RouteStage.
+#
+# class TriageStage(Stage):
+#     """Marks boilerplate pages so the parser skips them, reusing verdicts the inventory stored for these settings."""
+#
+#     def __init__(self, triage: Triage, store: InventoryStore | None = None) -> None:
+#         self.triage = triage
+#         self.store = store
+#         self.classifier = triage.build_classifier()
+#         self.policy = triage.build_policy()
+#
+#     def run(self, item: WorkItem) -> WorkItem:
+#         stored = self._stored(item.source)
+#         verdicts, skip = stored if stored is not None else run_triage(self.classifier, self.policy, item.page_texts)
+#         return replace(item, skip=skip, verdicts=verdicts)
+#
+#     def _stored(self, source: PdfSource) -> tuple[tuple[PageVerdict, ...], frozenset[int]] | None:
+#         return self.store.triage(source.hash_id, self.triage.key) if self.store is not None else None
+#
+#
+# class RouteStage(Stage):
+#     """Chooses which parser configuration handles the document, e.g. OCR for image-only PDFs."""
+#
+#     def __init__(self, router: Router) -> None:
+#         self.router = router
+#
+#     def run(self, item: WorkItem) -> WorkItem:
+#         return replace(item, route=self.router.route(item.page_texts))
 
 
 class ParseStage(Stage):
@@ -99,19 +106,21 @@ class ParseStage(Stage):
         return replace(item, document=self.parsers[item.route].parse(item.source, item.skip, item.page_texts))
 
 
-class PostprocessStage(Stage):
-    """Applies document processors in order, e.g. dropping non-chart pictures."""
-
-    def __init__(self, processors: Sequence[DocumentProcessor]) -> None:
-        self.processors = tuple(processors)
-
-    def run(self, item: WorkItem) -> WorkItem:
-        document, notes = item.require_document(), dict(item.notes)
-        for processor in self.processors:
-            result = processor.process(document)
-            document = result.document
-            notes[processor.name] = result.notes
-        return replace(item, document=document, notes=notes)
+# Disabled: PostprocessStage.
+#
+# class PostprocessStage(Stage):
+#     """Applies document processors in order, e.g. dropping non-chart pictures."""
+#
+#     def __init__(self, processors: Sequence[DocumentProcessor]) -> None:
+#         self.processors = tuple(processors)
+#
+#     def run(self, item: WorkItem) -> WorkItem:
+#         document, notes = item.require_document(), dict(item.notes)
+#         for processor in self.processors:
+#             result = processor.process(document)
+#             document = result.document
+#             notes[processor.name] = result.notes
+#         return replace(item, document=document, notes=notes)
 
 
 class WriteStage(Stage):

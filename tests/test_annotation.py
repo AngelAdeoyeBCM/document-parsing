@@ -12,7 +12,7 @@ import annotation.cvat as cvat_module
 from annotation import Workspace, collect, export_documents, load_gold, prepare
 from inventory.inventory import file_hash
 from parsing.core import serialize
-from parsing.pipeline import RunConfig
+from pipeline import RunConfig
 
 TEXT = 'Enough meaningful text on this page to count as an embedded text layer, well past fifty characters'
 

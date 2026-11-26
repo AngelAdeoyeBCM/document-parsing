@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 import pytest
@@ -40,19 +41,19 @@ def spec_path(tmp_path: Path) -> Path:
             'references': [reference.as_posix()],
             'output': (tmp_path / 'stage').as_posix(),
             'configs': (tmp_path / 'configs').as_posix(),
-            'metrics': {'body.loss': {'label': 'Loss rate', 'gold': True}, 'body.separation': {'better': 'higher'}},
+            'metrics': {'body.loss': {'label': 'Loss rate', 'target': 'C', 'gold': True}, 'layout.f1': {'target': 'B', 'better': 'higher'}},
             'experiments': [
                 {'id': 'E1', 'title': 'Backend', 'variants': {'pypdfium2': {'backend': 'pypdfium2'}}, 'metrics': ['body.loss']},
                 {
                     'id': 'E2',
-                    'title': 'Backend text',
+                    'title': 'Assemble and tables',
                     'variants': {
-                        'backend_text': {'overrides': {'force_backend_text': True}},
-                        'both': {'overrides': {'do_table_structure': False}},
+                        'separators': {'use_reading_order_separators': False},
+                        'no_tables': {'overrides': {'do_table_structure': False}},
                     },
                     'metrics': ['body.loss'],
                 },
-                {'id': 'E9', 'title': 'Validate', 'split': 'holdout', 'variants': {'best': {'from': 'E1.pypdfium2'}}},
+                {'id': 'E8', 'title': 'Validate', 'split': 'holdout', 'variants': {'best': {'from': 'E1.pypdfium2'}}},
             ],
         },
     )  # fmt: skip
@@ -60,14 +61,14 @@ def spec_path(tmp_path: Path) -> Path:
 
 def test_variants_change_options_on_the_current_best(spec_path: Path) -> None:
     spec = Spec.load(spec_path)
-    e1, e2, e9 = spec.experiments
+    e1, e2, e8 = spec.experiments
     assert spec.control(e1).name == 'b0' and spec.best_from(e1) is None
     pypdfium2 = spec.variant(e1, 'pypdfium2')
     assert pypdfium2.options == {'do_ocr': False, 'layout_model': 'layout_heron_default', 'backend': 'pypdfium2'}
     assert pypdfium2.run_dir.parent == spec.output and pypdfium2.run_dir.name.startswith('e1_pypdfium2_')
     assert spec.changed(e1) == ['backend']
-    assert spec.split_of(e9) == 'holdout' and spec.split_of(e1) == 'screen'
-    assert spec.variant(e9, 'best').run_dir == pypdfium2.run_dir  # reuses E1's run
+    assert spec.split_of(e8) == 'holdout' and spec.split_of(e1) == 'screen'
+    assert spec.variant(e8, 'best').run_dir == pypdfium2.run_dir  # reuses E1's run
     assert [arm.role for arm in spec.arms(e2)] == ['reference', 'control', 'variant', 'variant']
 
     raw = yaml.safe_load(spec_path.read_text(encoding='utf-8'))
@@ -76,11 +77,11 @@ def test_variants_change_options_on_the_current_best(spec_path: Path) -> None:
     spec = Spec.load(spec_path)
     e1, e2, _ = spec.experiments
     assert spec.control(e2).run_dir == pypdfium2.run_dir and spec.best_from(e2) == e1  # E1's winner is E2's control
-    both = spec.variant(e2, 'both')
-    assert both.options['backend'] == 'pypdfium2' and both.options['overrides.do_table_structure'] is False
-    assert spec.changed(e2) == ['overrides.force_backend_text', 'overrides.do_table_structure']
-    other = spec.variant(e2, 'backend_text')
-    assert other.run_dir != both.run_dir and 'overrides.do_table_structure' not in other.options
+    no_tables = spec.variant(e2, 'no_tables')
+    assert no_tables.options['backend'] == 'pypdfium2' and no_tables.options['overrides.do_table_structure'] is False
+    assert set(spec.changed(e2)) == {'use_reading_order_separators', 'overrides.do_table_structure'}
+    other = spec.variant(e2, 'separators')
+    assert other.run_dir != no_tables.run_dir and 'overrides.do_table_structure' not in other.options
 
 
 def _row(metric: str, diff: float, low: float, high: float, stratum: str = 'all') -> dict[str, str]:
@@ -108,6 +109,22 @@ def _fake_run(run_dir: Path, loss: list[float], config: dict) -> None:
     (run_dir / EVALUATION_DIR / 'params.json').write_text(json.dumps({'run': run_dir.name}), encoding='utf-8')
 
 
+def test_runs_scored_before_the_gold_changed_are_scored_again(spec_path: Path) -> None:
+    spec = Spec.load(spec_path)
+    e1 = spec.experiments[0]
+    arms = [spec.reference_arms()[0], spec.control(e1), spec.variant(e1, 'pypdfium2')]
+    for arm in arms:
+        _fake_run(arm.run_dir, [0.3, 0.3, 0.3], {})
+        os.utime(arm.run_dir / 'run.jsonl', (1000, 1000))
+        os.utime(arm.run_dir / EVALUATION_DIR / 'metrics.json', (2000, 2000))  # scored after parsing
+
+    scored: list[Path] = []
+    evaluate(spec, e1, score=scored.append, gold_time=1500)  # gold older than every score
+    assert scored == []
+    evaluate(spec, e1, score=scored.append, gold_time=3000)  # gold collected since
+    assert scored == [arm.run_dir for arm in arms]
+
+
 def test_log_experiment_to_mlflow(spec_path: Path, tmp_path: Path, monkeypatch) -> None:
     mlflow = pytest.importorskip('mlflow')
     from experiments.tracking import log_experiment, log_overview
@@ -125,6 +142,8 @@ def test_log_experiment_to_mlflow(spec_path: Path, tmp_path: Path, monkeypatch) 
     assert '## Controls held fixed' in description and '| `do_ocr` | `false` |' in description
     assert '`backend`: `default` → `pypdfium2`' in description  # set on the variant only
     assert '## Experiments' in stage_overview(spec)
+    assert stage_overview(spec).index('`layout.f1`') < stage_overview(spec).index('`body.loss`')  # B before C
+    assert '| C | `body.loss` | Loss rate |' in description
 
     monkeypatch.setenv('MLFLOW_TRACKING_URI', (tmp_path / 'mlruns').as_uri())
     monkeypatch.setenv('MLFLOW_ALLOW_FILE_STORE', 'true')

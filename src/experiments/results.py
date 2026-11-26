@@ -30,20 +30,30 @@ class ArmResult:
         return next((r for r in self.comparison if r['metric'] == metric and r['stratum'] == 'all'), None)
 
 
-def stale(run_dir: Path) -> bool:
-    """Parsed, but not scored since its last parse."""
+def stale(run_dir: Path, gold_time: float = 0.0) -> bool:
+    """Parsed, but not scored since its last parse or since the gold last changed (``gold_time``, an mtime)."""
     metrics, manifest = run_dir / EVALUATION_DIR / 'metrics.json', run_dir / 'run.jsonl'
-    return manifest.is_file() and (not metrics.is_file() or metrics.stat().st_mtime < manifest.stat().st_mtime)
+    if not manifest.is_file():
+        return False
+    if not metrics.is_file():
+        return True
+    scored = metrics.stat().st_mtime
+    return scored < manifest.stat().st_mtime or scored < gold_time
 
 
-def evaluate(spec: Spec, experiment: Experiment, score: Callable[[Path], object], seed: int = 0) -> list[ArmResult]:
-    """Score stale runs with ``score``, then compare every parsed run of the experiment with its control."""
+def evaluate(
+    spec: Spec, experiment: Experiment, score: Callable[[Path], object], seed: int = 0, gold_time: float = 0.0
+) -> list[ArmResult]:
+    """Score stale runs with ``score``, then compare every parsed run of the experiment with its control.
+
+    Runs scored before ``gold_time`` are scored again, so every run is compared against the same gold.
+    """
     split = spec.split_of(experiment)
     metrics = experiment.metrics
     strata = spec.strata if spec.strata and spec.strata.is_file() else None
     control, arms = spec.control(experiment), spec.arms(experiment)
     for arm in arms:  # all first: every run is compared with the control
-        if stale(arm.run_dir):
+        if stale(arm.run_dir, gold_time):
             score(arm.run_dir)
     results = []
     for arm in arms:

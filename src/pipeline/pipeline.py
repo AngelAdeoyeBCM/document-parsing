@@ -5,22 +5,18 @@ from collections.abc import Iterator, Sequence
 from functools import reduce
 
 from inventory import InventoryStore, PdfSource
+from parsing.parsers import get_parser
 
-from ..parsers import get_parser
-from .components import build_processor, build_renderer, build_triage
+from .components import build_renderer
 from .config import RunConfig
 from .manifest import RunManifest
-from .routing import DEFAULT_ROUTE, Router, SparseTextRoute
-from .stages import (
-    ParseStage,
-    PostprocessStage,
-    RouteStage,
-    Stage,
-    TextLayerStage,
-    TriageStage,
-    WorkItem,
-    WriteStage,
-)
+from .routing import DEFAULT_ROUTE
+from .stages import ParseStage, Stage, TextLayerStage, WorkItem, WriteStage
+
+# Disabled stages; restore these imports with them:
+# from .components import build_processor, build_triage
+# from .routing import Router, SparseTextRoute
+# from .stages import PostprocessStage, RouteStage, TriageStage
 
 logger = logging.getLogger(__name__)
 
@@ -34,18 +30,22 @@ class Pipeline:
 
     @classmethod
     def from_config(cls, config: RunConfig, store: InventoryStore | None = None) -> Pipeline:
-        """``store``, when given, supplies text layers and triage verdicts the inventory already computed."""
+        """``store``, when given, supplies the text layers the inventory already read."""
+        if config.triage or config.routes or config.postprocess:
+            raise ValueError(
+                f'{config.name}: triage, routes and postprocess stages are disabled (commented out in pipeline/stages.py)'
+            )
         stages: list[Stage] = [TextLayerStage(store)]
-        if config.triage:
-            stages.append(TriageStage(build_triage(config.triage), store))
+        # if config.triage:
+        #     stages.append(TriageStage(build_triage(config.triage), store))
         base = config.parser
         parsers = {DEFAULT_ROUTE: get_parser(base.name, base.options)}
-        if config.routes:
-            stages.append(RouteStage(Router([SparseTextRoute(r.name, r.max_chars_per_page) for r in config.routes])))
-            parsers |= {r.name: get_parser(base.name, {**base.options, **r.options}) for r in config.routes}
+        # if config.routes:
+        #     stages.append(RouteStage(Router([SparseTextRoute(r.name, r.max_chars_per_page) for r in config.routes])))
+        #     parsers |= {r.name: get_parser(base.name, {**base.options, **r.options}) for r in config.routes}
         stages.append(ParseStage(parsers))
-        if config.postprocess:
-            stages.append(PostprocessStage([build_processor(spec) for spec in config.postprocess]))
+        # if config.postprocess:
+        #     stages.append(PostprocessStage([build_processor(spec) for spec in config.postprocess]))
         stages.append(WriteStage([build_renderer(spec) for spec in config.renderers], config.output))
         return cls(stages, manifest=RunManifest(config.output))
 

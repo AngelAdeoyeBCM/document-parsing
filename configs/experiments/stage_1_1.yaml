@@ -1,54 +1,90 @@
 # Stage 1.1 experiment suite (docling_experiment_overview.md §3), reviewed in MLflow.
 #   uv run python -m experiments configs configs/experiments/stage_1_1.yaml E1   # write run configs
-#   uv run parsing run configs/stage_1_1/<run>.yaml                              # parse each one
+#   uv run pipeline run configs/stage_1_1/<run>.yaml                             # parse each one
 #   uv run python -m experiments log configs/experiments/stage_1_1.yaml E1       # score, compare, log
 # After review, set `winner:` on the experiment; later experiments change options on that winner.
 stage: '1.1'
-title: Text-only extraction
+title: Text extraction and layout categorisation
 aim: >-
-  The best text-only extraction. The body serializer keeps TEXT, PARAGRAPH, SECTION_HEADER, TITLE and
-  LIST_ITEM and drops tables, pictures, captions, footnotes, headers and footers; layout levers matter only
-  through their effect on that text. Primary metrics are loss rate and garble rate; leak rate is secondary;
-  separation rate shows the structural gain over pypdf.
+  The best text extraction (text quality) and layout categorisation (the right keep or drop decision per
+  block), so the custom serializer can keep body text (TEXT, PARAGRAPH, SECTION_HEADER, TITLE, LIST_ITEM) and
+  route everything else downstream. Only the core pipeline stages are tuned (Preprocess, Layout, Tables,
+  Assemble). OCR is off throughout: every sampled document has an embedded text layer, and OCR is Stage 1.2+.
 base_config: configs/docling_b0.yaml      # B0: STANDARD pipeline, Docling defaults except do_ocr=false
 references: [configs/pypdf_default.yaml]  # P0: pypdf full page text, in every table
 output: outputs/stage_1_1                 # variant runs: <output>/<id>_<variant>_<settings hash>
 configs: configs/stage_1_1                # generated run configs
-split: screen                             # 80 screening documents; the 20 held out wait for E9
+split: screen                             # 80 screening documents; the 20 held out wait for E8
 strata: data/strata.csv                   # doc_id,page,tags: multi_column, table_heavy, garbled, ...
 
+# Targets: A text quality (all extracted text), B layout (labels), C serializer (body text, the end result).
 metrics:
   extracted.garble_rate:
     label: Garble rate
-    description: Share of words with U+FFFD, (cid:n), private-use characters or detached diacritics, in all output text.
+    target: A
+    description: >-
+      Share of words with U+FFFD, (cid:n), private-use or control characters, unexpanded ligatures (ﬁ) or detached
+      diacritics, in all output text.
   extracted.dropped_text_rate:
     label: Dropped-text rate
+    target: A
     description: Share of text-layer words (pypdf) that appear in no output item.
+  extracted.loss:
+    label: Full-text loss
+    target: A
+    gold: true
+    description: Share of gold full-page words missing from all output text (1 − word recall).
+  layout.f1:
+    label: Layout F1
+    target: B
+    better: higher
+    gold: true
+    description: >-
+      Mean over labels of box F1 against the gold boxes (same label, IoU ≥ 0.5). Per label in pages.csv as
+      layout.f1.<label>.
+  layout.leak_from.footnote: {label: Leak from footnotes, target: B, gold: true, description: Share of body output words that are gold footnote text.}
+  layout.leak_from.caption: {label: Leak from captions, target: B, gold: true, description: Share of body output words that are gold caption text.}
+  layout.leak_from.furniture: {label: Leak from headers and footers, target: B, gold: true, description: Share of body output words that are gold page header or footer text.}
+  layout.leak_from.table: {label: Leak from tables, target: B, gold: true, description: Share of body output words that are gold table text.}
+  layout.leak_from.picture: {label: Leak from pictures, target: B, gold: true, description: Share of body output words that are gold text inside pictures.}
+  layout.loss_to.footnote: {label: Loss to footnotes, target: B, gold: true, description: Share of gold body words the run labelled as footnote.}
+  layout.loss_to.caption: {label: Loss to captions, target: B, gold: true, description: Share of gold body words the run labelled as caption.}
+  layout.loss_to.furniture: {label: Loss to headers and footers, target: B, gold: true, description: Share of gold body words the run labelled as page header or footer.}
+  layout.loss_to.table: {label: Loss to tables, target: B, gold: true, description: Share of gold body words the run put in a table.}
+  layout.loss_to.picture: {label: Loss to pictures, target: B, gold: true, description: Share of gold body words the run put inside a picture.}
+  body.separation:
+    label: Separation rate
+    target: B
+    better: higher
+    gold: true
+    description: Share of gold table and figure words kept out of the body output. pypdf scores near 0.
   body.loss:
     label: Loss rate
+    target: C
     gold: true
     description: Share of gold body words missing from the body output (1 − word recall).
   body.leak:
     label: Leak rate
+    target: C
     gold: true
     description: Share of body output words not in the gold body text.
   body.leak_excluded:
     label: Leak of excluded text
+    target: C
     gold: true
     description: Leak that is gold table, figure, caption or furniture text.
   body.leak_other:
     label: Other leak
+    target: C
     gold: true
     description: Leak the gold page does not hold at all (noise, broken words).
-  body.separation:
-    label: Separation rate
-    better: higher
-    gold: true
-    description: Share of gold table and figure words kept out of the body output. pypdf scores near 0.
   body.order_gap:
     label: Order gap
+    target: C
     gold: true
-    description: Order-insensitive word F1 minus order-sensitive score (1 − normalised word edit distance).
+    description: >-
+      Share of the words output and gold share that are out of order (1 − longest common subsequence ÷ shared
+      words). Lost and leaked words do not count; 0 is perfect order.
   seconds_per_page:
     label: Time per page
     description: Parse seconds per page on the run's device.
@@ -57,11 +93,11 @@ experiments:
   - id: E0
     title: Determinism check
     pipeline_stage: Whole pipeline
-    target: A, C
+    target: A, B, C
     question: Does a second B0 run reproduce the first? Differences here are the noise floor.
     variants:
       rerun: {}
-    metrics: [extracted.garble_rate, extracted.dropped_text_rate, body.loss, body.leak, seconds_per_page]
+    metrics: [extracted.garble_rate, extracted.loss, layout.f1, body.loss, body.leak, seconds_per_page]
 
   - id: E1
     title: PDF backend
@@ -70,66 +106,69 @@ experiments:
     question: Does Docling's pypdfium2 backend garble or drop less text than docling-parse?
     variants:
       pypdfium2: {backend: pypdfium2}
-    metrics: [extracted.garble_rate, extracted.dropped_text_rate, body.loss, seconds_per_page]
+    metrics: [extracted.garble_rate, extracted.dropped_text_rate, extracted.loss, seconds_per_page]
     winner: null
 
   - id: E2
-    title: OCR x backend text
-    pipeline_stage: OCR, Layout
-    target: A
-    question: >-
-      Does OCR on broken text layers, or re-reading each element's text from the backend, cut garbling
-      without losing text? Report the garbled stratum separately.
-    notes: 2×2 grid; the control is the cell with OCR off and backend text off. OCR uses Docling's auto engine.
-    variants:
-      ocr: {do_ocr: true, replace_broken_text_layer: true}
-      backend_text: {overrides: {force_backend_text: true}}
-      ocr_backend_text: {do_ocr: true, replace_broken_text_layer: true, overrides: {force_backend_text: true}}
-    metrics: [extracted.garble_rate, body.loss, extracted.dropped_text_rate, seconds_per_page]
-    winner: null
-
-  - id: E3
     title: Layout preset
     pipeline_stage: Layout
-    target: C
-    question: Which layout model keeps the most body text with the least table and figure text leaking in?
+    target: B, C
+    question: Which layout model labels blocks best, keeping the most body text with the least other text leaking in?
+    notes: >-
+      Gold boxes were pre-annotated by Docling's default layout model before correction in CVAT, which can
+      favour layout_heron_default here.
     variants:
       heron_101: {layout_model: layout_heron_101}
       egret_medium: {layout_model: layout_egret_medium}
       egret_large: {layout_model: layout_egret_large}
       egret_xlarge: {layout_model: layout_egret_xlarge}
-    metrics: [body.loss, body.leak, body.separation, seconds_per_page]
+    metrics:
+      - layout.f1
+      - layout.leak_from.footnote
+      - layout.leak_from.caption
+      - layout.leak_from.furniture
+      - body.separation
+      - body.leak
+      - body.loss
+      - seconds_per_page
     winner: null
 
-  - id: E4
+  - id: E3
     title: Layout score threshold
     pipeline_stage: Layout
-    target: C
-    question: How does the minimum detection confidence trade loss against leak on the E3 winner?
+    target: B, C
+    question: How does the minimum detection confidence trade loss against leak on the E2 winner?
     notes: Option path to verify against the installed Docling; a wrong path fails at parse time.
     variants:
       t0.2: {overrides: {layout_options.engine_options.score_threshold: 0.2}}
       t0.4: {overrides: {layout_options.engine_options.score_threshold: 0.4}}
       t0.5: {overrides: {layout_options.engine_options.score_threshold: 0.5}}
-    metrics: [body.loss, body.leak, body.separation]
+    metrics: [layout.f1, body.separation, body.leak, body.loss]
     winner: null
 
-  - id: E5
+  - id: E4
     title: Layout postprocessing
     pipeline_stage: Layout
-    target: A, C
-    question: Do orphan clusters or the layout postprocessor change dropped, lost or leaked text?
+    target: B, A
+    question: Do orphan clusters or the layout postprocessor change dropped text or block labels?
     notes: Each option is toggled once, separately.
     variants:
       no_orphan_clusters: {overrides: {layout_options.create_orphan_clusters: false}}
       no_postprocessor: {overrides: {layout_options.run_postprocessor: false}}
-    metrics: [extracted.dropped_text_rate, body.loss, body.leak]
+    metrics:
+      - extracted.dropped_text_rate
+      - layout.f1
+      - layout.leak_from.footnote
+      - layout.leak_from.caption
+      - layout.leak_from.furniture
+      - body.leak
+      - body.loss
     winner: null
 
-  - id: E6
+  - id: E5
     title: Table structure
     pipeline_stage: Tables
-    target: Cost
+    target: Cost (C unchanged)
     question: >-
       Can table structure be switched off for speed without table text falling back into the body?
     variants:
@@ -137,7 +176,7 @@ experiments:
     metrics: [body.loss, body.leak, body.separation, seconds_per_page]
     winner: null
 
-  - id: E7
+  - id: E6
     title: Reading-order separators
     pipeline_stage: Assemble
     target: C
@@ -147,24 +186,24 @@ experiments:
     metrics: [body.order_gap, body.loss]
     winner: null
 
-  - id: E8
+  - id: E7
     title: Combine
     pipeline_stage: Combine
-    target: A, C
+    target: A, B, C
     question: Do the levers that beat the noise floor add up, or interact?
-    notes: Fill in once E1–E7 are reviewed. Full grid if 3 or fewer levers, else add one at a time.
+    notes: Fill in once E1–E6 are reviewed. Full grid if 3 or fewer levers, else add one at a time.
     variants: {}
-    metrics: [body.loss, extracted.garble_rate, body.leak, body.separation, seconds_per_page]
+    metrics: [extracted.garble_rate, extracted.loss, layout.f1, body.loss, body.leak, body.separation, seconds_per_page]
     winner: null
 
-  - id: E9
+  - id: E8
     title: Validate
     pipeline_stage: Validate
-    target: A, C
+    target: A, B, C
     question: Do the winner and runner-up hold on the 20 held-out documents?
     notes: >-
       Reuses runs already parsed, scored on the held-out split; list them as
       `<name>: {from: <experiment id>.<variant>}`.
     split: holdout
     variants: {}
-    metrics: [body.loss, extracted.garble_rate, body.leak, body.separation, seconds_per_page]
+    metrics: [extracted.garble_rate, extracted.loss, layout.f1, body.loss, body.leak, body.separation, seconds_per_page]

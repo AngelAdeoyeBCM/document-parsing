@@ -6,10 +6,12 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from inventory import Inventory, PdfSource
+from parsing.parsers import available
 
-from .parsers import available
-from .pipeline import Pipeline, RunConfig, RunManifest
-from .pipeline.components import build_triage
+from .components import build_triage
+from .config import RunConfig
+from .manifest import RunManifest
+from .pipeline import Pipeline
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +23,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 
 def _arguments() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog='parsing', description='Parse research PDFs for RAG ingestion.')
+    parser = argparse.ArgumentParser(prog='pipeline', description='Parse research PDFs for RAG ingestion.')
     commands = parser.add_subparsers(required=True)
 
     run = commands.add_parser('run', help='parse documents with one experiment config')

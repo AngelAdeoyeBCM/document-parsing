@@ -17,7 +17,7 @@ from typing import Any, Literal
 
 import yaml
 
-from parsing.pipeline.config import RunConfig
+from pipeline.config import RunConfig
 
 Role = Literal['reference', 'control', 'variant']
 
@@ -28,6 +28,7 @@ class MetricInfo:
 
     column: str
     label: str
+    target: str = ''  # A text quality, B layout, C serializer
     better: Literal['lower', 'higher'] = 'lower'
     gold: bool = False
     description: str = ''
@@ -37,7 +38,7 @@ class MetricInfo:
 class Variant:
     name: str
     options: Mapping[str, Any] = field(default_factory=dict)  # parser options set on the current best
-    source: str | None = None  # 'E3.egret_large': reuse that experiment's run instead of parsing again
+    source: str | None = None  # 'E2.egret_large': reuse that experiment's run instead of parsing again
 
 
 @dataclass(frozen=True, slots=True)
