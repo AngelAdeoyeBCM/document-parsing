@@ -1,0 +1,496 @@
+2026-11-26 17:55:55,716 INFO annotation.cvat: docling-eval create-gt --benchmark PlainFiles --dataset-source data/annotation/pdfs --output-dir data/annotation/docling_eval
+2026-11-26 17:56:58,781 - INFO - Processing range [0:100] out of 100 total items (100 items)
+2026-11-26 17:56:58,781 - INFO - Dataset 'pdfs' total items: 100. Selected range: [0, -1] = 100 items
+2026-11-26 17:56:58,781 - INFO - Processing File dataset with 100 files
+Processing files for pdfs:   0%|                                                                        | 0/100 [00:00<?, ?it/s]Processing files for pdfs:   1%|▋                                                               | 1/100 [00:00<01:21,  1.21it/s]Processing files for pdfs:   2%|█▎                                                              | 2/100 [00:08<07:39,  4.69s/it]Processing files for pdfs:   3%|█▉                                                              | 3/100 [00:10<05:27,  3.38s/it]Processing files for pdfs:   4%|██▌                                                             | 4/100 [00:10<03:51,  2.41s/it]Processing files for pdfs:   5%|███▏                                                            | 5/100 [00:18<06:50,  4.32s/it]Processing files for pdfs:   6%|███▊                                                            | 6/100 [00:19<04:39,  2.97s/it]Processing files for pdfs:   7%|████▍                                                           | 7/100 [00:26<06:51,  4.42s/it]Processing files for pdfs:   8%|█████                                                           | 8/100 [00:34<08:39,  5.65s/it]Processing files for pdfs:   9%|█████▊                                                          | 9/100 [00:35<06:07,  4.04s/it]Processing files for pdfs:  10%|██████▎                                                        | 10/100 [00:41<06:55,  4.62s/it]Processing files for pdfs:  11%|██████▉                                                        | 11/100 [00:41<04:58,  3.35s/it]Processing files for pdfs:  12%|███████▌                                                       | 12/100 [00:42<03:52,  2.65s/it]Processing files for pdfs:  13%|████████▏                                                      | 13/100 [00:58<09:38,  6.64s/it]Processing files for pdfs:  14%|████████▊                                                      | 14/100 [01:07<10:33,  7.36s/it]Processing files for pdfs:  15%|█████████▍                                                     | 15/100 [01:08<07:36,  5.37s/it]Processing files for pdfs:  16%|██████████                                                     | 16/100 [01:10<06:18,  4.51s/it]Processing files for pdfs:  17%|██████████▋                                                    | 17/100 [01:11<04:42,  3.41s/it]Processing files for pdfs:  18%|███████████▎                                                   | 18/100 [01:14<04:19,  3.17s/it]Processing files for pdfs:  19%|███████████▉                                                   | 19/100 [01:14<03:04,  2.28s/it]Processing files for pdfs:  20%|████████████▌                                                  | 20/100 [01:15<02:23,  1.79s/it]Processing files for pdfs:  21%|█████████████▏                                                 | 21/100 [01:17<02:28,  1.87s/it]Processing files for pdfs:  22%|█████████████▊                                                 | 22/100 [01:17<01:53,  1.46s/it]Processing files for pdfs:  23%|██████████████▍                                                | 23/100 [01:18<01:45,  1.37s/it]Processing files for pdfs:  24%|███████████████                                                | 24/100 [01:24<03:21,  2.65s/it]Processing files for pdfs:  25%|███████████████▊                                               | 25/100 [01:26<03:00,  2.41s/it]Processing files for pdfs:  26%|████████████████▍                                              | 26/100 [01:27<02:36,  2.12s/it]Processing files for pdfs:  27%|█████████████████                                              | 27/100 [01:28<02:07,  1.74s/it]Processing files for pdfs:  28%|█████████████████▋                                             | 28/100 [01:30<02:06,  1.75s/it]Processing files for pdfs:  29%|██████████████████▎                                            | 29/100 [01:36<03:33,  3.01s/it]Processing files for pdfs:  30%|██████████████████▉                                            | 30/100 [01:40<03:54,  3.35s/it]Processing files for pdfs:  31%|███████████████████▌                                           | 31/100 [01:43<03:40,  3.20s/it]Processing files for pdfs:  32%|████████████████████▏                                          | 32/100 [01:43<02:41,  2.38s/it]Processing files for pdfs:  33%|████████████████████▊                                          | 33/100 [01:44<02:03,  1.85s/it]Processing files for pdfs:  34%|█████████████████████▍                                         | 34/100 [01:50<03:20,  3.03s/it]Processing files for pdfs:  35%|██████████████████████                                         | 35/100 [02:10<08:59,  8.31s/it]Processing files for pdfs:  36%|██████████████████████▋                                        | 36/100 [02:13<07:02,  6.60s/it]Processing files for pdfs:  37%|███████████████████████▎                                       | 37/100 [02:14<05:17,  5.04s/it]Processing files for pdfs:  38%|███████████████████████▉                                       | 38/100 [02:35<09:55,  9.61s/it]Processing files for pdfs:  39%|████████████████████████▌                                      | 39/100 [02:35<06:53,  6.78s/it]Processing files for pdfs:  40%|█████████████████████████▏                                     | 40/100 [02:37<05:18,  5.31s/it]Processing files for pdfs:  41%|█████████████████████████▊                                     | 41/100 [02:41<04:50,  4.92s/it]Processing files for pdfs:  42%|██████████████████████████▍                                    | 42/100 [02:48<05:26,  5.62s/it]Processing files for pdfs:  43%|███████████████████████████                                    | 43/100 [02:50<04:12,  4.43s/it]Processing files for pdfs:  44%|███████████████████████████▋                                   | 44/100 [02:55<04:23,  4.71s/it]Processing files for pdfs:  45%|████████████████████████████▎                                  | 45/100 [02:57<03:37,  3.95s/it]Processing files for pdfs:  46%|████████████████████████████▉                                  | 46/100 [02:58<02:36,  2.90s/it]Processing files for pdfs:  47%|█████████████████████████████▌                                 | 47/100 [02:58<01:51,  2.10s/it]Processing files for pdfs:  48%|██████████████████████████████▏                                | 48/100 [02:59<01:39,  1.91s/it]Processing files for pdfs:  49%|██████████████████████████████▊                                | 49/100 [03:08<03:18,  3.90s/it]Processing files for pdfs:  50%|███████████████████████████████▌                               | 50/100 [03:21<05:34,  6.68s/it]Processing files for pdfs:  51%|████████████████████████████████▏                              | 51/100 [03:25<04:55,  6.02s/it]Processing files for pdfs:  52%|████████████████████████████████▊                              | 52/100 [03:28<03:59,  4.99s/it]Processing files for pdfs:  53%|█████████████████████████████████▍                             | 53/100 [03:36<04:41,  5.98s/it]Processing files for pdfs:  54%|██████████████████████████████████                             | 54/100 [03:41<04:20,  5.67s/it]Processing files for pdfs:  55%|██████████████████████████████████▋                            | 55/100 [03:42<03:07,  4.17s/it]Processing files for pdfs:  56%|███████████████████████████████████▎                           | 56/100 [03:43<02:17,  3.11s/it]Processing files for pdfs:  57%|███████████████████████████████████▉                           | 57/100 [03:43<01:37,  2.28s/it]Processing files for pdfs:  58%|████████████████████████████████████▌                          | 58/100 [03:44<01:15,  1.79s/it]Processing files for pdfs:  59%|█████████████████████████████████████▏                         | 59/100 [03:46<01:18,  1.92s/it]Processing files for pdfs:  60%|█████████████████████████████████████▊                         | 60/100 [03:46<00:58,  1.46s/it]Processing files for pdfs:  61%|██████████████████████████████████████▍                        | 61/100 [03:47<00:48,  1.24s/it]Processing files for pdfs:  62%|███████████████████████████████████████                        | 62/100 [03:49<00:56,  1.49s/it]Processing files for pdfs:  63%|███████████████████████████████████████▋                       | 63/100 [03:49<00:41,  1.12s/it]Processing files for pdfs:  64%|████████████████████████████████████████▎                      | 64/100 [03:50<00:39,  1.10s/it]Processing files for pdfs:  65%|████████████████████████████████████████▉                      | 65/100 [03:51<00:31,  1.11it/s]Processing files for pdfs:  66%|█████████████████████████████████████████▌                     | 66/100 [03:52<00:32,  1.03it/s]Processing files for pdfs:  67%|██████████████████████████████████████████▏                    | 67/100 [03:52<00:26,  1.25it/s]Processing files for pdfs:  68%|██████████████████████████████████████████▊                    | 68/100 [03:53<00:25,  1.26it/s]Processing files for pdfs:  69%|███████████████████████████████████████████▍                   | 69/100 [03:53<00:19,  1.59it/s]Processing files for pdfs:  70%|████████████████████████████████████████████                   | 70/100 [03:59<01:08,  2.30s/it]Processing files for pdfs:  71%|████████████████████████████████████████████▋                  | 71/100 [04:02<01:06,  2.30s/it]Processing files for pdfs:  72%|█████████████████████████████████████████████▎                 | 72/100 [04:03<00:53,  1.91s/it]Processing files for pdfs:  73%|█████████████████████████████████████████████▉                 | 73/100 [04:04<00:43,  1.60s/it]Processing files for pdfs:  74%|██████████████████████████████████████████████▌                | 74/100 [04:06<00:45,  1.74s/it]Processing files for pdfs:  75%|███████████████████████████████████████████████▎               | 75/100 [04:06<00:33,  1.35s/it]Processing files for pdfs:  76%|███████████████████████████████████████████████▉               | 76/100 [04:07<00:25,  1.08s/it]Processing files for pdfs:  77%|████████████████████████████████████████████████▌              | 77/100 [04:15<01:15,  3.26s/it]Processing files for pdfs:  78%|█████████████████████████████████████████████████▏             | 78/100 [04:16<00:55,  2.54s/it]Processing files for pdfs:  79%|█████████████████████████████████████████████████▊             | 79/100 [04:18<00:49,  2.36s/it]2026-11-26 18:09:56,764 - INFO - Saved shard 0 to data/annotation/docling_eval/gt_dataset/test/shard_000000_000000.parquet with 80 documents
+Processing files for pdfs:  80%|█████████████████████████████████████████████████▌            | 80/100 [12:57<52:31, 157.58s/it]Processing files for pdfs:  81%|██████████████████████████████████████████████████▏           | 81/100 [13:07<35:51, 113.25s/it]Processing files for pdfs:  82%|███████████████████████████████████████████████████▋           | 82/100 [13:13<24:15, 80.86s/it]Processing files for pdfs:  83%|████████████████████████████████████████████████████▎          | 83/100 [13:22<16:51, 59.53s/it]Processing files for pdfs:  84%|████████████████████████████████████████████████████▉          | 84/100 [13:23<11:08, 41.81s/it]Processing files for pdfs:  85%|█████████████████████████████████████████████████████▌         | 85/100 [13:23<07:20, 29.34s/it]Processing files for pdfs:  86%|██████████████████████████████████████████████████████▏        | 86/100 [13:23<04:49, 20.67s/it]Processing files for pdfs:  87%|██████████████████████████████████████████████████████▊        | 87/100 [13:26<03:18, 15.28s/it]Processing files for pdfs:  88%|███████████████████████████████████████████████████████▍       | 88/100 [13:26<02:09, 10.77s/it]Processing files for pdfs:  89%|████████████████████████████████████████████████████████       | 89/100 [13:31<01:36,  8.80s/it]Processing files for pdfs:  90%|████████████████████████████████████████████████████████▋      | 90/100 [13:34<01:10,  7.05s/it]Processing files for pdfs:  91%|█████████████████████████████████████████████████████████▎     | 91/100 [13:39<00:59,  6.57s/it]Processing files for pdfs:  92%|█████████████████████████████████████████████████████████▉     | 92/100 [13:45<00:51,  6.38s/it]Processing files for pdfs:  93%|██████████████████████████████████████████████████████████▌    | 93/100 [13:46<00:34,  4.89s/it]Processing files for pdfs:  94%|███████████████████████████████████████████████████████████▏   | 94/100 [13:50<00:27,  4.60s/it]Processing files for pdfs:  95%|███████████████████████████████████████████████████████████▊   | 95/100 [13:53<00:19,  3.97s/it]Processing files for pdfs:  96%|████████████████████████████████████████████████████████████▍  | 96/100 [13:57<00:15,  3.93s/it]Processing files for pdfs:  97%|█████████████████████████████████████████████████████████████  | 97/100 [14:05<00:15,  5.27s/it]Processing files for pdfs:  98%|█████████████████████████████████████████████████████████████▋ | 98/100 [14:07<00:08,  4.19s/it]Processing files for pdfs:  99%|██████████████████████████████████████████████████████████████▎| 99/100 [14:35<00:11, 11.45s/it]Processing files for pdfs: 100%|██████████████████████████████████████████████████████████████| 100/100 [14:41<00:00,  9.67s/it]Processing files for pdfs: 100%|██████████████████████████████████████████████████████████████| 100/100 [14:41<00:00,  8.81s/it]
+2026-11-26 18:15:15,856 - INFO - Saved shard 1 to data/annotation/docling_eval/gt_dataset/test/shard_000000_000001.parquet with 20 documents
+2026-11-26 18:15:15,856 - INFO - Saved 100 records in 2 chunks to data/annotation/docling_eval/gt_dataset/test
+2026-11-26 18:15:15,870 - INFO - Ground truth dataset created at data/annotation/docling_eval/gt_dataset
+2026-11-26 18:15:18,112 INFO annotation.cvat: docling-eval create-eval --benchmark PlainFiles --output-dir data/annotation/docling_eval --prediction-provider Docling
+2026-11-26 18:16:17,693 - INFO - profile_pipeline_timings: True
+2026-11-26 18:16:18,191 - INFO - HTTP Request: HEAD https://s3.amazonaws.com/datasets.huggingface.co/datasets/datasets/parquet/parquet.py "HTTP/1.1 404 Not Found"
+Generating test split: 0 examples [00:00, ? examples/s]Generating test split: 80 examples [00:02, 31.85 examples/s]Generating test split: 100 examples [00:04, 21.71 examples/s]Generating test split: 100 examples [00:04, 21.88 examples/s]
+2026-11-26 18:16:23,051 - INFO - Processing range [0:100] out of 100 total items (100 items)
+2026-11-26 18:16:23,051 - INFO - Dataset 'PlainFiles' total items: 100. Selected range: [0, 100] = 100 items
+Creating predictions:   0%|                                                                     | 0/100 [00:00<?, ?it/s]
+Loading weights:   0%|          | 0/770 [00:00<?, ?it/s][A
+Loading weights:  97%|█████████▋| 744/770 [00:00<00:00, 7437.10it/s][ALoading weights: 100%|██████████| 770/770 [00:00<00:00, 7443.17it/s]
+[33m[WARNING] 2026-11-26 18:16:31,660 [RapidOCR] provider_config.py:103: CUDAExecutionProvider is not in available providers (['AzureExecutionProvider', 'CPUExecutionProvider']). Use AzureExecutionProvider inference by default.[0m
+[33m[WARNING] 2026-11-26 18:16:31,721 [RapidOCR] provider_config.py:103: CUDAExecutionProvider is not in available providers (['AzureExecutionProvider', 'CPUExecutionProvider']). Use AzureExecutionProvider inference by default.[0m
+[33m[WARNING] 2026-11-26 18:16:32,187 [RapidOCR] provider_config.py:103: CUDAExecutionProvider is not in available providers (['AzureExecutionProvider', 'CPUExecutionProvider']). Use AzureExecutionProvider inference by default.[0m
+[33m[WARNING] 2026-11-26 18:16:32,216 [RapidOCR] provider_config.py:103: CUDAExecutionProvider is not in available providers (['AzureExecutionProvider', 'CPUExecutionProvider']). Use AzureExecutionProvider inference by default.[0m
+[33m[WARNING] 2026-11-26 18:16:32,246 [RapidOCR] provider_config.py:103: CUDAExecutionProvider is not in available providers (['AzureExecutionProvider', 'CPUExecutionProvider']). Use AzureExecutionProvider inference by default.[0m
+[33m[WARNING] 2026-11-26 18:16:32,327 [RapidOCR] provider_config.py:103: CUDAExecutionProvider is not in available providers (['AzureExecutionProvider', 'CPUExecutionProvider']). Use AzureExecutionProvider inference by default.[0m
+Creating predictions:   1%|▌                                                            | 1/100 [00:17<28:34, 17.31s/it]Creating predictions:   2%|█▏                                                         | 2/100 [02:36<2:25:19, 88.98s/it]Creating predictions:   3%|█▊                                                         | 3/100 [03:23<1:53:09, 70.00s/it]Creating predictions:   4%|██▎                                                        | 4/100 [03:35<1:15:06, 46.94s/it]2026-11-26 18:23:05,631 - WARNING - Skipping page separator extraction on page 46: 8984 separator candidates exceed the limit of 5000. Such dense vector geometry cannot yield trustworthy page separators; reading order falls back to the pre-separator behavior.
+Creating predictions:   5%|██▉                                                       | 5/100 [08:17<3:28:49, 131.89s/it]Creating predictions:   6%|███▌                                                       | 6/100 [08:20<2:17:45, 87.93s/it]2026-11-26 18:24:54,190 - WARNING - RapidOCR returned empty result!
+Creating predictions:   7%|████                                                      | 7/100 [11:32<3:08:59, 121.93s/it]2026-11-26 18:29:18,347 - WARNING - Skipping page separator extraction on page 22: 5448 separator candidates exceed the limit of 5000. Such dense vector geometry cannot yield trustworthy page separators; reading order falls back to the pre-separator behavior.
+2026-11-26 18:29:18,780 - WARNING - Skipping page separator extraction on page 24: 7621 separator candidates exceed the limit of 5000. Such dense vector geometry cannot yield trustworthy page separators; reading order falls back to the pre-separator behavior.
+2026-11-26 18:29:20,167 - WARNING - Skipping page separator extraction on page 35: 6770 separator candidates exceed the limit of 5000. Such dense vector geometry cannot yield trustworthy page separators; reading order falls back to the pre-separator behavior.
+2026-11-26 18:29:20,204 - WARNING - Skipping page separator extraction on page 36: 5674 separator candidates exceed the limit of 5000. Such dense vector geometry cannot yield trustworthy page separators; reading order falls back to the pre-separator behavior.
+Creating predictions:   8%|████▋                                                     | 8/100 [15:08<3:52:45, 151.80s/it]2026-11-26 18:31:32,924 - WARNING - RapidOCR returned empty result!
+2026-11-26 18:31:33,920 - WARNING - RapidOCR returned empty result!
+Creating predictions:   9%|█████▏                                                    | 9/100 [15:17<2:42:33, 107.19s/it]2026-11-26 18:32:52,419 - WARNING - Skipping page separator extraction on page 15: 5583 separator candidates exceed the limit of 5000. Such dense vector geometry cannot yield trustworthy page separators; reading order falls back to the pre-separator behavior.
+Creating predictions:  10%|█████▋                                                   | 10/100 [17:31<2:53:14, 115.49s/it]Creating predictions:  11%|██████▍                                                   | 11/100 [17:35<2:00:31, 81.25s/it]Creating predictions:  12%|██████▉                                                   | 12/100 [17:54<1:31:30, 62.40s/it]Creating predictions:  13%|███████▍                                                 | 13/100 [24:32<3:57:51, 164.04s/it]Creating predictions:  14%|███████▉                                                 | 14/100 [27:48<4:08:57, 173.70s/it]2026-11-26 18:44:12,811 - WARNING - RapidOCR returned empty result!
+Creating predictions:  15%|████████▌                                                | 15/100 [27:55<2:55:04, 123.59s/it]2026-11-26 18:44:38,789 - WARNING - 3 of 374 pdf cells matched neither a row nor a column band of the 43x11 grid and were dropped from the table
+2026-11-26 18:44:39,102 - WARNING - Skipping page separator extraction on page 5: 5138 separator candidates exceed the limit of 5000. Such dense vector geometry cannot yield trustworthy page separators; reading order falls back to the pre-separator behavior.
+Creating predictions:  16%|█████████▎                                                | 16/100 [28:33<2:16:57, 97.82s/it]2026-11-26 18:44:57,383 - WARNING - RapidOCR returned empty result!
+Creating predictions:  17%|█████████▊                                                | 17/100 [28:47<1:40:13, 72.46s/it]Creating predictions:  18%|██████████▍                                               | 18/100 [29:44<1:32:45, 67.87s/it]Creating predictions:  19%|███████████                                               | 19/100 [29:49<1:06:04, 48.94s/it]Creating predictions:  20%|████████████                                                | 20/100 [30:01<50:25, 37.82s/it]2026-11-26 18:46:25,668 - WARNING - RapidOCR returned empty result!
+2026-11-26 18:46:26,738 - WARNING - RapidOCR returned empty result!
+2026-11-26 18:46:30,734 - WARNING - RapidOCR returned empty result!
+2026-11-26 18:46:32,303 - WARNING - RapidOCR returned empty result!
+2026-11-26 18:46:33,237 - WARNING - RapidOCR returned empty result!
+2026-11-26 18:46:34,119 - WARNING - RapidOCR returned empty result!
+2026-11-26 18:46:35,671 - WARNING - RapidOCR returned empty result!
+2026-11-26 18:46:40,789 - WARNING - RapidOCR returned empty result!
+2026-11-26 18:46:41,672 - WARNING - RapidOCR returned empty result!
+2026-11-26 18:46:42,606 - WARNING - RapidOCR returned empty result!
+Creating predictions:  21%|████████████▌                                               | 21/100 [30:42<51:01, 38.75s/it]Creating predictions:  22%|█████████████▏                                              | 22/100 [30:50<38:37, 29.71s/it]Creating predictions:  23%|█████████████▊                                              | 23/100 [31:16<36:37, 28.54s/it]2026-11-26 18:47:42,346 - WARNING - RapidOCR returned empty result!
+2026-11-26 18:47:52,836 - WARNING - 3 of 312 pdf cells matched neither a row nor a column band of the 8x3 grid and were dropped from the table
+[33m[WARNING] 2026-11-26 18:47:56,412 [RapidOCR] main.py:164: The text detection result is empty[0m
+2026-11-26 18:47:56,412 - WARNING - RapidOCR returned empty result!
+2026-11-26 18:48:04,850 - WARNING - RapidOCR returned empty result!
+2026-11-26 18:48:29,701 - WARNING - RapidOCR returned empty result!
+2026-11-26 18:48:43,588 - WARNING - RapidOCR returned empty result!
+2026-11-26 18:49:01,980 - WARNING - RapidOCR returned empty result!
+Creating predictions:  24%|█████████████▉                                            | 24/100 [33:32<1:16:55, 60.72s/it]Creating predictions:  25%|██████████████▌                                           | 25/100 [34:21<1:11:42, 57.37s/it]Creating predictions:  26%|███████████████▌                                            | 26/100 [34:41<56:59, 46.21s/it]Creating predictions:  27%|████████████████▏                                           | 27/100 [35:03<47:09, 38.75s/it]2026-11-26 18:51:34,213 - WARNING - RapidOCR returned empty result!
+Creating predictions:  28%|████████████████▊                                           | 28/100 [35:39<45:39, 38.05s/it]2026-11-26 18:52:38,388 - WARNING - Skipping page separator extraction on page 13: 26023 separator candidates exceed the limit of 5000. Such dense vector geometry cannot yield trustworthy page separators; reading order falls back to the pre-separator behavior.
+Creating predictions:  29%|████████████████▊                                         | 29/100 [37:11<1:04:15, 54.31s/it]2026-11-26 18:54:32,127 - WARNING - Skipping page separator extraction on page 17: 8438 separator candidates exceed the limit of 5000. Such dense vector geometry cannot yield trustworthy page separators; reading order falls back to the pre-separator behavior.
+Creating predictions:  30%|█████████████████▍                                        | 30/100 [38:43<1:16:28, 65.55s/it]2026-11-26 18:55:09,171 - WARNING - RapidOCR returned empty result!
+Creating predictions:  31%|█████████████████▉                                        | 31/100 [39:41<1:12:37, 63.15s/it]Creating predictions:  32%|███████████████████▏                                        | 32/100 [39:46<51:59, 45.88s/it]2026-11-26 18:56:15,639 - WARNING - Skipping page separator extraction on page 1: 5085 separator candidates exceed the limit of 5000. Such dense vector geometry cannot yield trustworthy page separators; reading order falls back to the pre-separator behavior.
+Creating predictions:  33%|███████████████████▊                                        | 33/100 [39:56<38:54, 34.85s/it]2026-11-26 18:56:24,603 - WARNING - RapidOCR returned empty result!
+2026-11-26 18:56:27,277 - WARNING - RapidOCR returned empty result!
+2026-11-26 18:56:30,333 - WARNING - RapidOCR returned empty result!
+2026-11-26 18:56:31,616 - WARNING - RapidOCR returned empty result!
+2026-11-26 18:56:33,361 - WARNING - RapidOCR returned empty result!
+2026-11-26 18:56:38,579 - WARNING - RapidOCR returned empty result!
+2026-11-26 18:56:41,797 - WARNING - RapidOCR returned empty result!
+2026-11-26 18:56:44,661 - WARNING - RapidOCR returned empty result!
+2026-11-26 18:56:47,078 - WARNING - RapidOCR returned empty result!
+2026-11-26 18:56:48,913 - WARNING - RapidOCR returned empty result!
+2026-11-26 18:56:54,880 - WARNING - RapidOCR returned empty result!
+2026-11-26 18:56:57,296 - WARNING - RapidOCR returned empty result!
+2026-11-26 18:56:59,571 - WARNING - RapidOCR returned empty result!
+2026-11-26 18:57:00,682 - WARNING - RapidOCR returned empty result!
+2026-11-26 18:57:01,042 - WARNING - RapidOCR returned empty result!
+2026-11-26 18:57:01,338 - WARNING - RapidOCR returned empty result!
+2026-11-26 18:57:01,685 - WARNING - RapidOCR returned empty result!
+Creating predictions:  34%|███████████████████▋                                      | 34/100 [41:39<1:01:04, 55.52s/it][33m[WARNING] 2026-11-26 18:58:08,819 [RapidOCR] main.py:164: The text detection result is empty[0m
+2026-11-26 18:58:08,820 - WARNING - RapidOCR returned empty result!
+2026-11-26 18:59:41,301 - WARNING - 2 of 57 pdf cells matched neither a row nor a column band of the 9x6 grid and were dropped from the table
+2026-11-26 18:59:47,117 - WARNING - 2 of 25 pdf cells matched neither a row nor a column band of the 3x5 grid and were dropped from the table
+2026-11-26 19:00:14,756 - WARNING - 1 of 185 pdf cells matched neither a row nor a column band of the 43x7 grid and were dropped from the table
+Creating predictions:  35%|███████████████████▉                                     | 35/100 [50:51<3:41:24, 204.38s/it]2026-11-26 19:07:38,861 - WARNING - Skipping page separator extraction on page 5: 6558 separator candidates exceed the limit of 5000. Such dense vector geometry cannot yield trustworthy page separators; reading order falls back to the pre-separator behavior.
+2026-11-26 19:07:39,232 - WARNING - Skipping page separator extraction on page 10: 10017 separator candidates exceed the limit of 5000. Such dense vector geometry cannot yield trustworthy page separators; reading order falls back to the pre-separator behavior.
+Creating predictions:  36%|████████████████████▌                                    | 36/100 [51:33<2:46:03, 155.68s/it]Creating predictions:  37%|█████████████████████                                    | 37/100 [52:01<2:03:09, 117.29s/it]2026-11-26 19:09:13,710 - WARNING - 1 of 337 pdf cells matched neither a row nor a column band of the 29x12 grid and were dropped from the table
+2026-11-26 19:13:06,674 - WARNING - Skipping page separator extraction on page 35: 16481 separator candidates exceed the limit of 5000. Such dense vector geometry cannot yield trustworthy page separators; reading order falls back to the pre-separator behavior.
+2026-11-26 19:13:06,841 - WARNING - Skipping page separator extraction on page 66: 16318 separator candidates exceed the limit of 5000. Such dense vector geometry cannot yield trustworthy page separators; reading order falls back to the pre-separator behavior.
+Creating predictions:  38%|████████████████████▉                                  | 38/100 [1:05:12<5:30:11, 319.55s/it]Creating predictions:  39%|█████████████████████▍                                 | 39/100 [1:05:14<3:48:03, 224.33s/it]Creating predictions:  40%|██████████████████████                                 | 40/100 [1:05:57<2:49:44, 169.74s/it][33m[WARNING] 2026-11-26 19:22:24,070 [RapidOCR] main.py:164: The text detection result is empty[0m
+2026-11-26 19:22:24,071 - WARNING - RapidOCR returned empty result!
+2026-11-26 19:22:44,952 - WARNING - Skipping page separator extraction on page 3: 5161 separator candidates exceed the limit of 5000. Such dense vector geometry cannot yield trustworthy page separators; reading order falls back to the pre-separator behavior.
+Creating predictions:  41%|██████████████████████▌                                | 41/100 [1:06:56<2:14:25, 136.71s/it]2026-11-26 19:24:08,542 - WARNING - RapidOCR returned empty result!
+2026-11-26 19:24:12,972 - WARNING - RapidOCR returned empty result!
+2026-11-26 19:24:16,901 - WARNING - RapidOCR returned empty result!
+2026-11-26 19:24:25,476 - WARNING - RapidOCR returned empty result!
+2026-11-26 19:24:30,085 - WARNING - RapidOCR returned empty result!
+2026-11-26 19:24:33,398 - WARNING - RapidOCR returned empty result!
+2026-11-26 19:24:36,877 - WARNING - RapidOCR returned empty result!
+2026-11-26 19:24:40,416 - WARNING - RapidOCR returned empty result!
+2026-11-26 19:24:56,568 - WARNING - RapidOCR returned empty result!
+2026-11-26 19:25:03,022 - WARNING - RapidOCR returned empty result!
+2026-11-26 19:25:05,753 - WARNING - RapidOCR returned empty result!
+2026-11-26 19:25:17,217 - WARNING - RapidOCR returned empty result!
+2026-11-26 19:25:21,363 - WARNING - RapidOCR returned empty result!
+2026-11-26 19:25:23,519 - WARNING - RapidOCR returned empty result!
+2026-11-26 19:25:26,418 - WARNING - RapidOCR returned empty result!
+2026-11-26 19:25:28,852 - WARNING - RapidOCR returned empty result!
+2026-11-26 19:25:33,965 - WARNING - RapidOCR returned empty result!
+2026-11-26 19:25:49,901 - WARNING - Skipping page separator extraction on page 32: 9473 separator candidates exceed the limit of 5000. Such dense vector geometry cannot yield trustworthy page separators; reading order falls back to the pre-separator behavior.
+/net/nas/uxhome/angel.adeoye/document-parsing/.venv/lib64/python3.11/site-packages/docling_core/types/doc/document.py:384: UserWarning: Table cell bbox coordinate l on page 27 is outside page bounds: value=-17.95358458161354 < lo=0.0; clamping to 0.0
+  holder.bbox = self._clamp_bbox_to_page(
+Creating predictions:  42%|███████████████████████                                | 42/100 [1:10:35<2:35:57, 161.34s/it]Creating predictions:  43%|███████████████████████▋                               | 43/100 [1:11:01<1:54:31, 120.55s/it]Creating predictions:  44%|████████████████████████▏                              | 44/100 [1:12:57<1:51:29, 119.45s/it]Creating predictions:  45%|█████████████████████████▏                              | 45/100 [1:13:28<1:24:59, 92.72s/it]Creating predictions:  46%|██████████████████████████▋                               | 46/100 [1:13:33<59:42, 66.34s/it]Creating predictions:  47%|███████████████████████████▎                              | 47/100 [1:13:35<41:43, 47.24s/it]2026-11-26 19:30:20,453 - WARNING - Discarding the 39x32 structure predicted for table 0 on page 8 because the predicted structure hit the 1024-step decode limit; its text is kept as a single cell.
+Creating predictions:  48%|███████████████████████████▊                              | 48/100 [1:14:06<36:46, 42.44s/it]Creating predictions:  49%|███████████████████████████▍                            | 49/100 [1:17:48<1:21:45, 96.18s/it]2026-11-26 19:35:19,491 - WARNING - Discarding the 16x9 structure predicted for table 0 on page 35 because the predicted structure hit the 1024-step decode limit; its text is kept as a single cell.
+2026-11-26 19:35:48,930 - WARNING - RapidOCR returned empty result!
+2026-11-26 19:35:49,553 - WARNING - RapidOCR returned empty result!
+2026-11-26 19:35:49,870 - WARNING - RapidOCR returned empty result!
+2026-11-26 19:35:50,202 - WARNING - RapidOCR returned empty result!
+2026-11-26 19:35:50,866 - WARNING - RapidOCR returned empty result!
+2026-11-26 19:35:51,206 - WARNING - RapidOCR returned empty result!
+2026-11-26 19:35:51,532 - WARNING - RapidOCR returned empty result!
+[33m[WARNING] 2026-11-26 19:35:51,734 [RapidOCR] main.py:164: The text detection result is empty[0m
+2026-11-26 19:35:51,735 - WARNING - RapidOCR returned empty result!
+2026-11-26 19:35:52,009 - WARNING - RapidOCR returned empty result!
+2026-11-26 19:35:57,347 - WARNING - Skipping page separator extraction on page 27: 5758 separator candidates exceed the limit of 5000. Such dense vector geometry cannot yield trustworthy page separators; reading order falls back to the pre-separator behavior.
+2026-11-26 19:35:57,680 - WARNING - Skipping page separator extraction on page 47: 9446 separator candidates exceed the limit of 5000. Such dense vector geometry cannot yield trustworthy page separators; reading order falls back to the pre-separator behavior.
+Creating predictions:  50%|███████████████████████████▌                           | 50/100 [1:22:25<2:05:22, 150.44s/it]2026-11-26 19:40:02,623 - WARNING - Skipping page separator extraction on page 24: 7427 separator candidates exceed the limit of 5000. Such dense vector geometry cannot yield trustworthy page separators; reading order falls back to the pre-separator behavior.
+Creating predictions:  51%|████████████████████████████                           | 51/100 [1:24:18<1:53:41, 139.21s/it][33m[WARNING] 2026-11-26 19:40:45,686 [RapidOCR] main.py:164: The text detection result is empty[0m
+2026-11-26 19:40:45,686 - WARNING - RapidOCR returned empty result!
+Creating predictions:  52%|████████████████████████████▌                          | 52/100 [1:24:51<1:25:46, 107.21s/it]2026-11-26 19:41:18,348 - WARNING - RapidOCR returned empty result!
+2026-11-26 19:43:46,825 - WARNING - Skipping page separator extraction on page 9: 6708 separator candidates exceed the limit of 5000. Such dense vector geometry cannot yield trustworthy page separators; reading order falls back to the pre-separator behavior.
+2026-11-26 19:43:48,124 - WARNING - Skipping page separator extraction on page 16: 13620 separator candidates exceed the limit of 5000. Such dense vector geometry cannot yield trustworthy page separators; reading order falls back to the pre-separator behavior.
+2026-11-26 19:43:58,330 - WARNING - Skipping page separator extraction on page 27: 7342 separator candidates exceed the limit of 5000. Such dense vector geometry cannot yield trustworthy page separators; reading order falls back to the pre-separator behavior.
+2026-11-26 19:43:58,460 - WARNING - Skipping page separator extraction on page 28: 21110 separator candidates exceed the limit of 5000. Such dense vector geometry cannot yield trustworthy page separators; reading order falls back to the pre-separator behavior.
+2026-11-26 19:43:58,971 - WARNING - Skipping page separator extraction on page 29: 77454 separator candidates exceed the limit of 5000. Such dense vector geometry cannot yield trustworthy page separators; reading order falls back to the pre-separator behavior.
+2026-11-26 19:43:59,794 - WARNING - Skipping page separator extraction on page 30: 18370 separator candidates exceed the limit of 5000. Such dense vector geometry cannot yield trustworthy page separators; reading order falls back to the pre-separator behavior.
+2026-11-26 19:43:59,931 - WARNING - Skipping page separator extraction on page 31: 21797 separator candidates exceed the limit of 5000. Such dense vector geometry cannot yield trustworthy page separators; reading order falls back to the pre-separator behavior.
+2026-11-26 19:44:00,050 - WARNING - Skipping page separator extraction on page 38: 5576 separator candidates exceed the limit of 5000. Such dense vector geometry cannot yield trustworthy page separators; reading order falls back to the pre-separator behavior.
+Creating predictions:  53%|█████████████████████████████▏                         | 53/100 [1:29:20<2:02:10, 155.97s/it]2026-11-26 19:45:49,445 - WARNING - RapidOCR returned empty result!
+2026-11-26 19:45:49,636 - WARNING - 2 of 101 pdf cells matched neither a row nor a column band of the 13x6 grid and were dropped from the table
+2026-11-26 19:46:26,077 - WARNING - 644 of 644 pdf cells matched neither a row nor a column band of the 2x2 grid and were dropped from the table
+2026-11-26 19:46:26,078 - WARNING - Discarding the 0x0 structure predicted for table 3 on page 13 because the predicted structure has no row break; its text is kept as a single cell.
+2026-11-26 19:46:45,460 - WARNING - Skipping page separator extraction on page 10: 17256 separator candidates exceed the limit of 5000. Such dense vector geometry cannot yield trustworthy page separators; reading order falls back to the pre-separator behavior.
+2026-11-26 19:46:45,504 - WARNING - Skipping page separator extraction on page 15: 5111 separator candidates exceed the limit of 5000. Such dense vector geometry cannot yield trustworthy page separators; reading order falls back to the pre-separator behavior.
+Creating predictions:  54%|█████████████████████████████▋                         | 54/100 [1:31:01<1:46:52, 139.41s/it]2026-11-26 19:47:25,432 - WARNING - RapidOCR returned empty result!
+Creating predictions:  55%|██████████████████████████████▊                         | 55/100 [1:31:06<1:14:12, 98.94s/it]Creating predictions:  56%|████████████████████████████████▍                         | 56/100 [1:31:14<52:31, 71.62s/it]Creating predictions:  57%|█████████████████████████████████                         | 57/100 [1:31:18<36:49, 51.38s/it]Creating predictions:  58%|█████████████████████████████████▋                        | 58/100 [1:31:28<27:23, 39.14s/it]Creating predictions:  59%|██████████████████████████████████▏                       | 59/100 [1:32:11<27:25, 40.13s/it]Creating predictions:  60%|██████████████████████████████████▊                       | 60/100 [1:32:17<19:55, 29.88s/it]2026-11-26 19:48:47,399 - WARNING - Skipping page separator extraction on page 2: 7561 separator candidates exceed the limit of 5000. Such dense vector geometry cannot yield trustworthy page separators; reading order falls back to the pre-separator behavior.
+Creating predictions:  61%|███████████████████████████████████▍                      | 61/100 [1:32:28<15:46, 24.26s/it]Creating predictions:  62%|███████████████████████████████████▉                      | 62/100 [1:33:04<17:41, 27.94s/it]Creating predictions:  63%|████████████████████████████████████▌                     | 63/100 [1:33:08<12:48, 20.77s/it]2026-11-26 19:49:32,597 - WARNING - RapidOCR returned empty result!
+Creating predictions:  64%|█████████████████████████████████████                     | 64/100 [1:33:27<11:59, 19.99s/it]Creating predictions:  65%|█████████████████████████████████████▋                    | 65/100 [1:33:30<08:40, 14.88s/it]Creating predictions:  66%|██████████████████████████████████████▎                   | 66/100 [1:33:44<08:18, 14.65s/it]Creating predictions:  67%|██████████████████████████████████████▊                   | 67/100 [1:33:50<06:39, 12.10s/it][33m[WARNING] 2026-11-26 19:50:14,054 [RapidOCR] main.py:164: The text detection result is empty[0m
+2026-11-26 19:50:14,054 - WARNING - RapidOCR returned empty result!
+Creating predictions:  68%|███████████████████████████████████████▍                  | 68/100 [1:34:06<07:04, 13.28s/it]Creating predictions:  69%|████████████████████████████████████████                  | 69/100 [1:34:09<05:13, 10.11s/it][33m[WARNING] 2026-11-26 19:50:34,199 [RapidOCR] main.py:164: The text detection result is empty[0m
+2026-11-26 19:50:34,207 - WARNING - RapidOCR returned empty result!
+Creating predictions:  70%|████████████████████████████████████████▌                 | 70/100 [1:36:02<20:33, 41.12s/it]2026-11-26 19:52:26,456 - WARNING - RapidOCR returned empty result!
+Creating predictions:  71%|█████████████████████████████████████████▏                | 71/100 [1:36:32<18:16, 37.80s/it]Creating predictions:  72%|█████████████████████████████████████████▊                | 72/100 [1:36:52<15:10, 32.53s/it]Creating predictions:  73%|██████████████████████████████████████████▎               | 73/100 [1:37:03<11:39, 25.89s/it]2026-11-26 19:53:34,636 - WARNING - 2 of 84 pdf cells matched neither a row nor a column band of the 18x3 grid and were dropped from the table
+Creating predictions:  74%|██████████████████████████████████████████▉               | 74/100 [1:37:27<11:02, 25.48s/it]Creating predictions:  75%|███████████████████████████████████████████▌              | 75/100 [1:37:35<08:26, 20.28s/it]Creating predictions:  76%|████████████████████████████████████████████              | 76/100 [1:37:40<06:16, 15.69s/it]Creating predictions:  77%|████████████████████████████████████████████▋             | 77/100 [1:40:13<21:43, 56.68s/it][33m[WARNING] 2026-11-26 19:56:36,974 [RapidOCR] main.py:164: The text detection result is empty[0m
+2026-11-26 19:56:36,974 - WARNING - RapidOCR returned empty result!
+Creating predictions:  78%|█████████████████████████████████████████████▏            | 78/100 [1:40:21<15:26, 42.12s/it]2026-11-26 19:56:45,181 - WARNING - RapidOCR returned empty result!
+2026-11-26 19:56:47,899 - WARNING - RapidOCR returned empty result!
+2026-11-26 19:56:52,994 - WARNING - RapidOCR returned empty result!
+Creating predictions:  79%|█████████████████████████████████████████████▊            | 79/100 [1:40:46<13:00, 37.19s/it]2026-11-26 19:57:35,834 - WARNING - 2 of 462 pdf cells matched neither a row nor a column band of the 85x14 grid and were dropped from the table
+2026-11-26 19:57:35,934 - WARNING - Discarding the 52x11 structure predicted for table 4 on page 19 because the predicted structure hit the 1024-step decode limit; its text is kept as a single cell.
+2026-11-26 19:57:36,009 - WARNING - Skipping page separator extraction on page 5: 7237 separator candidates exceed the limit of 5000. Such dense vector geometry cannot yield trustworthy page separators; reading order falls back to the pre-separator behavior.
+2026-11-26 19:58:02,866 - INFO - Saved shard 0 to data/annotation/docling_eval/eval_dataset/test/shard_000000_000000.parquet with 23 documents
+2026-11-26 19:58:06,337 - INFO - Saved shard 1 to data/annotation/docling_eval/eval_dataset/test/shard_000000_000001.parquet with 17 documents
+2026-11-26 19:58:10,230 - INFO - Saved shard 2 to data/annotation/docling_eval/eval_dataset/test/shard_000000_000002.parquet with 27 documents
+2026-11-26 19:58:11,420 - INFO - Saved shard 3 to data/annotation/docling_eval/eval_dataset/test/shard_000000_000003.parquet with 13 documents
+Creating predictions:  80%|██████████████████████████████████████████████▍           | 80/100 [1:41:48<14:48, 44.44s/it]2026-11-26 19:58:16,474 - WARNING - RapidOCR returned empty result!
+Creating predictions:  81%|██████████████████████████████████████████████▏          | 81/100 [1:45:42<32:08, 101.49s/it]2026-11-26 20:03:17,068 - WARNING - Skipping page separator extraction on page 8: 15607 separator candidates exceed the limit of 5000. Such dense vector geometry cannot yield trustworthy page separators; reading order falls back to the pre-separator behavior.
+2026-11-26 20:03:18,336 - WARNING - Skipping page separator extraction on page 11: 10155 separator candidates exceed the limit of 5000. Such dense vector geometry cannot yield trustworthy page separators; reading order falls back to the pre-separator behavior.
+2026-11-26 20:03:18,402 - WARNING - Skipping page separator extraction on page 12: 10509 separator candidates exceed the limit of 5000. Such dense vector geometry cannot yield trustworthy page separators; reading order falls back to the pre-separator behavior.
+2026-11-26 20:03:18,743 - WARNING - Skipping page separator extraction on page 20: 11089 separator candidates exceed the limit of 5000. Such dense vector geometry cannot yield trustworthy page separators; reading order falls back to the pre-separator behavior.
+Creating predictions:  82%|██████████████████████████████████████████████▋          | 82/100 [1:47:39<31:47, 105.97s/it]Creating predictions:  83%|███████████████████████████████████████████████▎         | 83/100 [1:51:33<40:52, 144.28s/it]Creating predictions:  84%|███████████████████████████████████████████████▉         | 84/100 [1:51:38<27:20, 102.55s/it]Creating predictions:  85%|█████████████████████████████████████████████████▎        | 85/100 [1:51:42<18:15, 73.02s/it]Creating predictions:  86%|█████████████████████████████████████████████████▉        | 86/100 [1:51:47<12:15, 52.56s/it]Creating predictions:  87%|██████████████████████████████████████████████████▍       | 87/100 [1:52:29<10:44, 49.60s/it]Creating predictions:  88%|███████████████████████████████████████████████████       | 88/100 [1:52:32<07:05, 35.50s/it]2026-11-26 20:08:57,597 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:08:58,492 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:08:59,387 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:09:02,110 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:09:03,040 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:09:04,953 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:09:05,764 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:09:06,775 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:09:07,898 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:09:08,751 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:09:10,530 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:09:12,189 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:09:13,096 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:09:14,124 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:09:15,025 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:09:15,962 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:09:16,749 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:09:17,543 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:09:18,543 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:09:19,456 - WARNING - RapidOCR returned empty result!
+Creating predictions:  89%|███████████████████████████████████████████████████▌      | 89/100 [1:53:29<07:41, 41.92s/it]2026-11-26 20:10:30,397 - WARNING - Skipping page separator extraction on page 13: 6468 separator candidates exceed the limit of 5000. Such dense vector geometry cannot yield trustworthy page separators; reading order falls back to the pre-separator behavior.
+Creating predictions:  90%|████████████████████████████████████████████████████▏     | 90/100 [1:54:26<07:44, 46.41s/it][33m[WARNING] 2026-11-26 20:10:50,927 [RapidOCR] main.py:164: The text detection result is empty[0m
+2026-11-26 20:10:50,927 - WARNING - RapidOCR returned empty result!
+Creating predictions:  91%|████████████████████████████████████████████████████▊     | 91/100 [1:57:19<12:40, 84.52s/it]2026-11-26 20:13:47,609 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:13:50,163 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:13:52,045 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:13:53,676 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:13:57,103 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:13:58,641 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:14:01,403 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:14:02,323 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:14:09,983 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:14:14,153 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:14:15,080 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:14:18,541 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:14:23,945 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:14:24,893 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:14:25,912 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:14:27,023 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:14:28,194 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:14:33,085 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:14:33,895 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:14:34,813 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:14:35,786 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:14:36,859 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:14:37,823 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:14:44,266 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:14:45,225 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:14:46,263 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:14:48,990 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:14:49,829 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:14:50,860 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:14:52,006 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:15:23,472 - WARNING - Skipping page separator extraction on page 5: 7144 separator candidates exceed the limit of 5000. Such dense vector geometry cannot yield trustworthy page separators; reading order falls back to the pre-separator behavior.
+Creating predictions:  92%|████████████████████████████████████████████████████▍    | 92/100 [1:59:53<14:03, 105.38s/it]Creating predictions:  93%|█████████████████████████████████████████████████████▉    | 93/100 [2:00:26<09:45, 83.59s/it]2026-11-26 20:17:09,333 - WARNING - 10 of 421 pdf cells matched neither a row nor a column band of the 94x11 grid and were dropped from the table
+2026-11-26 20:17:09,424 - WARNING - Discarding the 60x10 structure predicted for table 0 on page 13 because the predicted structure hit the 1024-step decode limit; its text is kept as a single cell.
+2026-11-26 20:17:52,261 - WARNING - 1107 of 1107 pdf cells matched neither a row nor a column band of the 2x2 grid and were dropped from the table
+2026-11-26 20:17:52,262 - WARNING - Discarding the 0x0 structure predicted for table 2 on page 18 because the predicted structure has no row break; its text is kept as a single cell.
+2026-11-26 20:17:57,088 - WARNING - 1077 of 1077 pdf cells matched neither a row nor a column band of the 2x2 grid and were dropped from the table
+2026-11-26 20:17:57,089 - WARNING - Discarding the 0x0 structure predicted for table 0 on page 19 because the predicted structure has no row break; its text is kept as a single cell.
+Creating predictions:  94%|██████████████████████████████████████████████████████▌   | 94/100 [2:02:14<09:06, 91.06s/it]Creating predictions:  95%|███████████████████████████████████████████████████████   | 95/100 [2:02:49<06:10, 74.18s/it]2026-11-26 20:20:07,747 - WARNING - Discarding the 69x9 structure predicted for table 20 on page 18 because the predicted structure hit the 1024-step decode limit; its text is kept as a single cell.
+Creating predictions:  96%|███████████████████████████████████████████████████████▋  | 96/100 [2:04:23<05:20, 80.13s/it]2026-11-26 20:20:49,462 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:20:52,310 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:20:53,294 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:20:56,151 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:20:58,662 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:21:02,044 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:21:02,901 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:21:05,058 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:21:07,462 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:21:08,360 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:21:09,583 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:21:10,657 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:21:13,542 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:21:15,264 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:21:16,235 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:21:17,027 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:21:18,721 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:21:21,865 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:21:23,388 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:21:24,897 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:21:26,400 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:21:28,128 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:21:29,902 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:21:30,786 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:21:32,645 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:21:33,644 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:21:36,895 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:21:37,859 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:21:38,684 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:21:41,631 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:21:42,611 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:21:43,593 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:21:47,415 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:21:48,411 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:21:49,319 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:21:50,323 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:22:00,868 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:22:02,014 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:22:03,032 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:22:13,555 - WARNING - RapidOCR returned empty result!
+Creating predictions:  97%|███████████████████████████████████████████████████████▎ | 97/100 [2:07:30<05:36, 112.06s/it][33m[WARNING] 2026-11-26 20:23:56,108 [RapidOCR] main.py:164: The text detection result is empty[0m
+2026-11-26 20:23:56,109 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:24:15,744 - WARNING - 871 of 871 pdf cells matched neither a row nor a column band of the 2x2 grid and were dropped from the table
+2026-11-26 20:24:15,745 - WARNING - Discarding the 0x0 structure predicted for table 0 on page 8 because the predicted structure has no row break; its text is kept as a single cell.
+Creating predictions:  98%|████████████████████████████████████████████████████████▊ | 98/100 [2:08:04<02:57, 88.69s/it][33m[WARNING] 2026-11-26 20:24:33,209 [RapidOCR] main.py:164: The text detection result is empty[0m
+2026-11-26 20:24:33,210 - WARNING - RapidOCR returned empty result!
+2026-11-26 20:28:50,459 - WARNING - Skipping page separator extraction on page 149: 6277 separator candidates exceed the limit of 5000. Such dense vector geometry cannot yield trustworthy page separators; reading order falls back to the pre-separator behavior.
+Creating predictions:  99%|████████████████████████████████████████████████████████▍| 99/100 [2:25:45<06:20, 380.45s/it]2026-11-26 20:43:15,310 - WARNING - Discarding the 57x16 structure predicted for table 0 on page 8 because the predicted structure hit the 1024-step decode limit; its text is kept as a single cell.
+2026-11-26 20:43:42,947 - WARNING - Skipping page separator extraction on page 4: 9492 separator candidates exceed the limit of 5000. Such dense vector geometry cannot yield trustworthy page separators; reading order falls back to the pre-separator behavior.
+2026-11-26 20:43:43,019 - WARNING - Skipping page separator extraction on page 10: 10273 separator candidates exceed the limit of 5000. Such dense vector geometry cannot yield trustworthy page separators; reading order falls back to the pre-separator behavior.
+Creating predictions: 100%|████████████████████████████████████████████████████████| 100/100 [2:28:14<00:00, 310.90s/it]Creating predictions: 100%|█████████████████████████████████████████████████████████| 100/100 [2:28:14<00:00, 88.94s/it]
+2026-11-26 20:44:41,138 - INFO - Saved shard 4 to data/annotation/docling_eval/eval_dataset/test/shard_000000_000004.parquet with 18 documents
+2026-11-26 20:44:42,835 - INFO - Saved shard 5 to data/annotation/docling_eval/eval_dataset/test/shard_000000_000005.parquet with 2 documents
+2026-11-26 20:44:42,846 - INFO - Saved 100 records in 6 chunks to data/annotation/docling_eval/eval_dataset/test
+2026-11-26 20:44:42,945 - INFO - Evaluation dataset created at data/annotation/docling_eval/eval_dataset
+2026-11-26 20:44:46,127 INFO annotation.cvat: docling-eval create-cvat --output-dir data/annotation/cvat --gt-dir data/annotation/docling_eval/eval_dataset/test --use-predictions --sliding-window 1
+2026-11-26 20:45:48,544 - INFO - Preparing dataset from data/annotation/docling_eval/eval_dataset/test for CVAT annotation
+2026-11-26 20:45:48,545 - INFO - Writing project description: data/annotation/cvat/cvat_description.json
+2026-11-26 20:45:48,827 - INFO - HTTP Request: HEAD https://s3.amazonaws.com/datasets.huggingface.co/datasets/datasets/parquet/parquet.py "HTTP/1.1 404 Not Found"
+Generating test split: 0 examples [00:00, ? examples/s]Generating test split: 23 examples [00:01, 15.12 examples/s]Generating test split: 40 examples [00:05,  6.39 examples/s]Generating test split: 67 examples [00:09,  6.58 examples/s]Generating test split: 80 examples [00:11,  6.94 examples/s]Generating test split: 98 examples [00:13,  6.79 examples/s]Generating test split: 100 examples [00:16,  4.82 examples/s]Generating test split: 100 examples [00:17,  5.84 examples/s]
+2026-11-26 20:46:07,625 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/034637927b5488dc66e9a45fa54265196e8e66fcffdb4522f3e9736b6611f02b.json
+2026-11-26 20:46:12,520 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/07838ff8a5cb981287783a8d7bd105e99ebd84e7a45ca2f81e7cddb8b4521b20.json
+2026-11-26 20:46:13,652 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/0906d69a7f2fb6d937c3bfc8b26aca1cf0b6dd1271c2e425f798c19387a3d207.json
+2026-11-26 20:46:14,179 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/09627550e3878db6cb1915ce58167a5b313d4754923bfcd6230af2aa9d8128e1.json
+2026-11-26 20:46:19,676 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/12b33dca57dc480caa68bcac5741be22cb0caa80501eeab4869962cfc2899b95.json
+2026-11-26 20:46:19,952 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/164a46156d2262c26237ee31ee79b02f4ebd5b8b9a692715a2f39a87f2f57603.json
+2026-11-26 20:46:24,878 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/1ba5c2b4bb45eeb1cc83d0bb68482a636ba73572652a2ad1c435639238f163e1.json
+2026-11-26 20:46:30,728 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/1be50955abda38681787cf86393d6af9d6092bfb7cb2ab8185c213e5b617de8d.json
+2026-11-26 20:46:31,063 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/20b2df141e2e3f0687ea14f8ce0ae591fb075b4f3e6f2b26c1d7063ccecc61fe.json
+2026-11-26 20:46:34,986 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/216ad93b28c76da911df57fe2110c87ae329ace468a88b024d0ad2534efa8ae4.json
+2026-11-26 20:46:35,291 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/225532d58c23f5cf93291b604656445875ebdaf9f7539f6f56453142fc529c3d.json
+2026-11-26 20:46:36,236 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/278a70e4277d67414bc1af95b7788eed4bf6538095850117cbb7a88b8078dd8c.json
+2026-11-26 20:46:46,009 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/2e5ee64c20c7ea979b179af047a9df2c549c11f5c5f00ec87cc0ca8efba3db06.json
+2026-11-26 20:46:51,575 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/2fb762918d59cdb69abae8585e2cfb8c0d55bae5a8eff32af7b71fcee7c307fa.json
+2026-11-26 20:46:51,980 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/3066efa480995a24bff6cee9d4958d886927bae1aa82936187620649c2f869e1.json
+2026-11-26 20:46:53,676 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/312dafa438493ed55b4fb2a85a8f5eaccf7361cbc1be7e567d63cf932420ba7f.json
+2026-11-26 20:46:54,201 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/31cd467822db9901de3bf6291c8345971ff151aaaaf28dae0dd5041f67b6cece.json
+2026-11-26 20:46:56,214 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/325dd582f9e5c95d41b5e10ad6dc819a51c426eeb0a0165a443598c3b77fb4e3.json
+2026-11-26 20:46:56,374 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/32872ae2e20a6ab324565f9c59760ac745a8b7a9afdd8908cc895c90c2200ce5.json
+2026-11-26 20:46:56,732 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/32cb3e7bbfb57029aa42abe74deba8ae3b1e73ce24f71b6798d1ad1607043fd7.json
+2026-11-26 20:46:57,939 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/33c5ddc60ef1d2f8f4b9aa8f4cce5a8e4457bf3780fa9cde07af5a904c73dc26.json
+2026-11-26 20:46:58,250 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/348558ccc443d8ddfba990ad72fb77713ecdf991a374a4867012bb4dde310e65.json
+2026-11-26 20:46:58,926 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/36446c91a54b8c139f7d3db8e48118392702975eb25f69ffe45bf94275df4750.json
+2026-11-26 20:47:02,704 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/36abce1375281b6f9452f7d8aa2b7e98bfb9e8125f63ff3410da8d51162dd4ad.json
+2026-11-26 20:47:03,860 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/3afe40b64ca98ceda353a552c851b86dee791134a33ba880386c56ac3a8a7018.json
+2026-11-26 20:47:04,627 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/3ba24c338fbdc56ec1d8ee96e5bab40c9a403e60aaada129735de688bf01011e.json
+2026-11-26 20:47:05,171 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/4481c9912f3eacd2fd84f0644a8000874e94c98a4a39a60f707a46e72956d9fc.json
+2026-11-26 20:47:06,392 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/481649efa102a5c7388ab1f30260fbd34faa284ad9999edf7c24e96cc9ace9f7.json
+2026-11-26 20:47:09,777 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/513416704bc7736d38e855b01b8ee03966a172beb0ce3df468b17288b216a676.json
+2026-11-26 20:47:12,767 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/53f191563d19bbc78edef9a5b7e0b6fb79246b68c9c5cd8a974cae508a5c8ce7.json
+2026-11-26 20:47:14,258 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/574e1d79c46ca2b46c34cf560773dbdef3697614ce927a349eef8742d410378d.json
+2026-11-26 20:47:14,513 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/5a749000c1d26220470d27fc74792263e1da8d0027a0b0278af0076804af2cba.json
+2026-11-26 20:47:14,854 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/5c33afe347d17f6b541fe010673ab7d283746b669f94fe8fecbf278de6c1ef73.json
+2026-11-26 20:47:18,287 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/5e3054927a055790551808cac08dc1a8791d6a83bf0b936146d258c3bca5fc0c.json
+2026-11-26 20:47:32,480 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/5f8590d90ccbae6e6245d653e8d252a62f35ee01bf576511b0bb1f1416cff352.json
+2026-11-26 20:47:34,192 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/60877d26340e27cd7242a7da38aab323df2cec5ace10643449b93a8f19acfec2.json
+2026-11-26 20:47:35,081 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/61d24fce9afb9a8be943222cf14f222b02e55418b19ee8b157d387a70a379b4b.json
+2026-11-26 20:47:49,357 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/6611753c7bc803ba3e3e8ebc3de5b88ffed87e368478ff64ca33d54571b4c38b.json
+2026-11-26 20:47:49,664 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/664d94e65a83a1fe6b630a223ab2f8da248f5ca5564302a5fd494fdbee8fae75.json
+2026-11-26 20:47:50,717 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/68d798cefd46b7117adfd83268fae5eead68a08484a0b4c79c80e5bdb5015560.json
+2026-11-26 20:47:53,236 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/6a0434cd9699dbf547e196dabb394cc098e24f9e0661b1fde9d9b00751bb1810.json
+2026-11-26 20:47:58,311 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/6ab435c14b18d756b453002e7b59cf5ea60d0a94f1308f1753535ab84ae3aba8.json
+2026-11-26 20:47:59,331 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/6dd318bc5b9b641dbd78d9e43a3036ecb2542c623718eb6ff3f38bdda3eb6f01.json
+2026-11-26 20:48:02,851 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/6df23fd0cae80771e4da1014adcf864bea0c292cf6f4b91b6303d93af1622f58.json
+2026-11-26 20:48:04,450 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/700bb6f78ebea1feb99fb4d74fb43cb2b5379cf17aa8f596733df271eb3a97b1.json
+2026-11-26 20:48:04,721 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/7792ccf895abd32ef31d82bb4c25dabe43c79971cea483fd391e06809c3993e9.json
+2026-11-26 20:48:04,860 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/79cfc831752f5222dae8a91a5b63d9995e2f305ca2d85b1916904b8ff348b8a4.json
+2026-11-26 20:48:05,836 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/7d6b66dc4d95229dca4d5afbb7edac3a5e6f7a12b1e9b7f44e7b532f119f64c2.json
+2026-11-26 20:48:11,720 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/7e499cc3fc5cf8d175ce94c64ecf70b2d7ce2a337cce20f02040559c71c1c164.json
+2026-11-26 20:48:20,231 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/886a04e371cc5fbfa7810aa9f4cccf0f7cf70c69652e49b151a3cd5e0a300796.json
+2026-11-26 20:48:23,732 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/8a6543567d9d36f5c7d5a270669c1291b632b81b15df0c92583bf851f937016d.json
+2026-11-26 20:48:25,160 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/8ade2d17607e28f55936069ff88cf960386651d0a976dfa063b7a2d2c7020c99.json
+2026-11-26 20:48:32,347 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/8d65d882ec58b54792f8d4cc9d40f9faa0b4586d0303570b096c21483dc3a1ff.json
+2026-11-26 20:48:35,643 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/8e5ea15f2abf6014176360b1408d2e661e93a677507dd06c30a9d7c951f4cf3b.json
+2026-11-26 20:48:36,015 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/8f64ba6bbeb925041559389da4464e195d74653fedc0037b8cd7bb3f3709152a.json
+2026-11-26 20:48:36,368 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/92115ae64a2fec624d804e0211268e2d1efc9c7cb0fb7893535577630e29401c.json
+2026-11-26 20:48:36,550 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/92856fa7152de309bb6a8630bf3e84e2d46b1a547631565d0a796dc143097d63.json
+2026-11-26 20:48:36,892 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/983a7a9badaf87f75fa63cfdb9f83c95f348e8b9d98dd3e8c96fa8c434747459.json
+2026-11-26 20:48:38,190 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/98539adceff9323a19e10c463cd114e0269ac4e67d7a8c970566c7ee03fb510f.json
+2026-11-26 20:48:38,701 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/9a834d76b4e70ab8fb98c1734251a02703c8a0d2be7960f7f8023807c0950b68.json
+2026-11-26 20:48:39,135 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/9ba7aec9dbdd0a61c4eca3091f6f9c09ca30b68700684d6abd8697b36ee96563.json
+2026-11-26 20:48:40,375 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/a4cd77c7be2c772b11662e1e8b0a1178c0bcccf94bb6e399e715ff326c6bc958.json
+2026-11-26 20:48:40,530 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/a5377359061dc1b79bf58f2e937590fcbf89404dc098bb113b19996a94f81e31.json
+2026-11-26 20:48:41,136 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/a6674099676628823263d7caadf3552da2b4488853a4f01623b1967279182d44.json
+2026-11-26 20:48:41,344 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/a6ee9961dbbf82995e3df4c3b0eb53efa836004d691cc2160ffc7db44532aef8.json
+2026-11-26 20:48:42,183 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/aab498ae14a004f519c8d66d0833011a33ef1e8fb72f15d0289b584d73e5f359.json
+2026-11-26 20:48:42,399 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/ab0373d999ae82d1637de0c8c11c234e4cae3d659c180097751e3571fd9dd6b5.json
+2026-11-26 20:48:42,929 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/ab3b71f84b08831efc40e412a78c4dea6517f689944fc2d5f2866f7f81481b6f.json
+2026-11-26 20:48:43,069 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/b098e23a3338177f314bc63c8771155233dbe8b95c64dffca7e0852dbefc8d88.json
+2026-11-26 20:48:46,816 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/b13f3b983d38ece15e40a34bc8bdda11a5e0d0be59dde8362a042e7cd8d29fd4.json
+2026-11-26 20:48:47,953 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/b158afd3afadeeb5082961d168c9a90ff2500767b08b86e4160d20056bf949bc.json
+2026-11-26 20:48:48,492 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/b4f2fb0371c2af6518ca4f10d2218f7edb752f77fbb60a8c27dd274bcf7af6cb.json
+2026-11-26 20:48:49,255 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/b55d802777a5457cd399303658f906fcb4926fe29db5951a470799caa5f29a55.json
+2026-11-26 20:48:50,388 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/b58745fd2c3a93e571cfa2de2d6bddd256a388c622dbffda0ad19a6e7055df69.json
+2026-11-26 20:48:50,647 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/bcc95e92be3e32b67a4e6b3ebf5f60afebea8f79e2951b60007f9c258e8f4e22.json
+2026-11-26 20:48:50,912 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/c01fe847d493bc514272fca60e05764d7bd7aa06d4aad46b57521a546ceb0ac7.json
+2026-11-26 20:48:56,000 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/c159f4431ae99086b78e77c0463bd3d66d505f8f700fcc1bdd5eb0c866198b6a.json
+2026-11-26 20:48:56,508 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/c32134193329f0c20f4821daa3db8182dc8e84739204d218163dfae56f0c796e.json
+2026-11-26 20:48:57,555 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/cbd830f34cc03c37a411dcfb2dc0c5ec4fdc2a702fcc4cb14dd010340322ad09.json
+2026-11-26 20:48:59,483 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/cd08ddc9144196e6fff07feb424e1c72a53d438ce622a6164f92a7ecd9f1aace.json
+2026-11-26 20:49:06,429 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/cff42a16b37b80a15b48ce2b6ae6252cab573757830c0c02daceb2a6d26b545a.json
+2026-11-26 20:49:09,711 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/d11bfe8adbd466de45b48211740cb20fefc183ad1e6347734444962b2425e365.json
+2026-11-26 20:49:16,319 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/d191ad242ba50a91f49dca1ea2174b86f0f395be1d39b9c47cc774bcccee5a18.json
+2026-11-26 20:49:16,657 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/d2033e50c7895cf14b0f66279dd952f0b9b551cb79483e8850ae4a99a994af7b.json
+2026-11-26 20:49:16,778 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/d22f9d3dc819597ac9f00b2437a33c0a987a18ed9332d77650096fe532336e64.json
+2026-11-26 20:49:16,995 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/d5a84a1271188733fa721ec79f03428e4e3f6a68941df4eddb7947ead82bc6e7.json
+2026-11-26 20:49:18,517 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/d8eac02c4b604d25f87ce40d753fcfd0ee1753747ddd1f9a6011126c601378fa.json
+2026-11-26 20:49:18,653 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/daefa8f9544f5c09728b2471cc9760da361582ccc6ed50093ef0da0d308429de.json
+2026-11-26 20:49:20,871 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/dd4fe916f409df7c1957915dce837dc0cb99b312e5467a78e7a2214fb3bc8192.json
+2026-11-26 20:49:22,453 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/e73c47f3ec336d1aa58b034f9348e787d7f00b5ba75eba42c007b9f485fa09b7.json
+2026-11-26 20:49:27,070 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/e76fa065a7c25757c5f1b9c30ca5e28e84ba09554ecc0818c1683c206050f1f6.json
+2026-11-26 20:49:31,159 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/e9298a06ace95c97814da1edf785fcd8e1499057ca14ecaa829c1b3bb63663da.json
+2026-11-26 20:49:32,046 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/f0835f7f2099d9e0134d6ad6996cc344aeebfa6de08385d5092f0e9d020a7eab.json
+2026-11-26 20:49:35,285 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/f5e9f8a090d3c520eac4d9d9d4ffe2a4549b617d1c1ab95038d3f71d13a7ff97.json
+2026-11-26 20:49:36,675 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/f61311127e28b21daa74f46517bdd8685fa16cd99c27d48f72783e650dab25f3.json
+2026-11-26 20:49:39,607 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/fb58622d6ceede3ec0d341b636ddaf8d24da5ca372ef5088ad659b6a67f78415.json
+2026-11-26 20:49:45,097 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/fbcf742b75977c3b149fd3330a10620f1648b8cbf125400f96e435354da6df67.json
+2026-11-26 20:49:46,239 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/fe13f30b41592a1c9b20cf88bf9646ff637ac8e5ca472bb8af23035c31031901.json
+2026-11-26 20:50:05,388 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/fec081a36e859d9bb49bae8a5c686353a54232865e7207adb0f5b8852582cc88.json
+2026-11-26 20:50:09,941 - INFO - Saved ground truth document to data/annotation/cvat/json_groundtruth/ff4c983871c34467307c8e996651033b263f6e5486e54dd48c513d72beb24b96.json
+2026-11-26 20:55:07,558 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_00_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,569 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_01_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,580 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_02_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,592 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_03_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,602 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_04_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,612 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_05_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,622 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_06_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,630 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_07_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,639 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_08_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,651 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_09_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,663 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_10_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,675 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_11_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,685 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_12_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,696 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_13_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,704 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_14_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,710 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_15_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,715 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_16_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,721 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_17_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,731 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_18_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,737 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_19_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,742 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_20_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,748 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_21_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,753 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_22_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,759 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_23_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,766 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_24_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,772 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_25_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,779 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_26_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,785 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_27_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,793 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_28_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,799 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_29_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,803 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_30_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,808 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_31_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,815 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_32_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,822 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_33_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,828 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_34_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,834 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_35_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,839 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_36_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,845 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_37_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,850 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_38_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,856 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_39_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,863 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_40_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,870 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_41_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,877 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_42_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,883 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_43_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,890 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_44_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,898 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_45_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,905 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_46_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,911 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_47_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,917 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_48_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,924 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_49_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,931 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_50_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,938 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_51_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,946 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_52_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,954 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_53_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,961 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_54_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,968 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_55_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,973 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_56_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,982 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_57_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,988 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_58_preannotate.xml with 20 annotations
+2026-11-26 20:55:07,994 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_59_preannotate.xml with 20 annotations
+2026-11-26 20:55:08,004 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_60_preannotate.xml with 20 annotations
+2026-11-26 20:55:08,014 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_61_preannotate.xml with 20 annotations
+2026-11-26 20:55:08,021 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_62_preannotate.xml with 20 annotations
+2026-11-26 20:55:08,027 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_63_preannotate.xml with 20 annotations
+2026-11-26 20:55:08,033 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_64_preannotate.xml with 20 annotations
+2026-11-26 20:55:08,039 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_65_preannotate.xml with 20 annotations
+2026-11-26 20:55:08,044 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_66_preannotate.xml with 20 annotations
+2026-11-26 20:55:08,050 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_67_preannotate.xml with 20 annotations
+2026-11-26 20:55:08,056 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_68_preannotate.xml with 20 annotations
+2026-11-26 20:55:08,064 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_69_preannotate.xml with 20 annotations
+2026-11-26 20:55:08,071 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_70_preannotate.xml with 20 annotations
+2026-11-26 20:55:08,079 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_71_preannotate.xml with 20 annotations
+2026-11-26 20:55:08,085 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_72_preannotate.xml with 20 annotations
+2026-11-26 20:55:08,092 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_73_preannotate.xml with 20 annotations
+2026-11-26 20:55:08,101 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_74_preannotate.xml with 20 annotations
+2026-11-26 20:55:08,109 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_75_preannotate.xml with 20 annotations
+2026-11-26 20:55:08,117 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_76_preannotate.xml with 20 annotations
+2026-11-26 20:55:08,130 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_77_preannotate.xml with 20 annotations
+2026-11-26 20:55:08,135 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_78_preannotate.xml with 20 annotations
+2026-11-26 20:55:08,142 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_79_preannotate.xml with 20 annotations
+2026-11-26 20:55:08,149 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_80_preannotate.xml with 20 annotations
+2026-11-26 20:55:08,154 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_81_preannotate.xml with 20 annotations
+2026-11-26 20:55:08,161 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_82_preannotate.xml with 20 annotations
+2026-11-26 20:55:08,169 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_83_preannotate.xml with 20 annotations
+2026-11-26 20:55:08,176 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_84_preannotate.xml with 20 annotations
+2026-11-26 20:55:08,184 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_85_preannotate.xml with 20 annotations
+2026-11-26 20:55:08,190 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_86_preannotate.xml with 20 annotations
+2026-11-26 20:55:08,199 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_87_preannotate.xml with 20 annotations
+2026-11-26 20:55:08,208 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_88_preannotate.xml with 20 annotations
+2026-11-26 20:55:08,217 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_89_preannotate.xml with 20 annotations
+2026-11-26 20:55:08,222 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_90_preannotate.xml with 20 annotations
+2026-11-26 20:55:08,229 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_91_preannotate.xml with 20 annotations
+2026-11-26 20:55:08,236 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_92_preannotate.xml with 20 annotations
+2026-11-26 20:55:08,243 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_93_preannotate.xml with 20 annotations
+2026-11-26 20:55:08,249 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_94_preannotate.xml with 20 annotations
+2026-11-26 20:55:08,256 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_95_preannotate.xml with 20 annotations
+2026-11-26 20:55:08,263 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_96_preannotate.xml with 20 annotations
+2026-11-26 20:55:08,270 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_97_preannotate.xml with 20 annotations
+2026-11-26 20:55:08,278 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_98_preannotate.xml with 20 annotations
+2026-11-26 20:55:08,287 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_99_preannotate.xml with 20 annotations
+2026-11-26 20:55:08,294 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_100_preannotate.xml with 20 annotations
+2026-11-26 20:55:08,306 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_101_preannotate.xml with 20 annotations
+2026-11-26 20:55:08,319 - INFO - Created preannotation file data/annotation/cvat/cvat_tasks/task_102_preannotate.xml with 2 annotations
+2026-11-26 20:55:08,886 - INFO - Cleaned up data/annotation/cvat/json_groundtruth after preannotation creation
+2026-11-26 20:55:09,827 - INFO - Saved annotation overview to data/annotation/cvat/cvat_overview.json with 2042 images
+2026-11-26 20:55:09,839 - INFO - CVAT annotation preparation complete in data/annotation/cvat
+2026-11-26 20:55:12,077 INFO annotation.cli: CVAT tasks are in data/annotation/cvat; see `annotation --help` for the steps in CVAT

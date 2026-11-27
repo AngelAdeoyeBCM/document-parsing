@@ -1,0 +1,12 @@
+name: e0_rerun_1b46c6
+input:
+  directory: storage
+  manifest: data/annotation/manifest.txt
+output: outputs/stage_1_1/e0_rerun_1b46c6
+parser:
+  name: docling
+  options:
+    layout_model: layout_heron_default
+    do_ocr: false
+    images_scale: 1.0
+    picture_images: false

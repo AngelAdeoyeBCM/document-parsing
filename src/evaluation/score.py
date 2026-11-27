@@ -5,7 +5,9 @@ split) and ``params.json`` (the parser, its settings and the serializations scor
 
 A. Text quality is measured on the 'extracted' serialization (everything the parser read), overall and per element
 kind (``extracted.garble_rate.caption``, ``.page_footer``, ``.picture_text``, ...) to show where garbling comes from;
-on gold pages ``extracted.loss`` is the word loss against the gold full-page text.
+a few broken documents dominate the mean, so ``extracted.garbled_doc_pages`` flags the pages of documents with a mean
+garble rate of ``GARBLED_DOCUMENT`` or more and ``extracted.garble_rate_clean_docs`` is the garble rate without them.
+On gold pages ``extracted.loss`` is the word loss against the gold full-page text.
 B. Layout, on gold pages: ``layout.f1`` (and ``layout.f1.<label>``) from the labelled boxes, and the targeted
 confusions ``layout.leak_from.<group>`` and ``layout.loss_to.<group>``.
 C. Serializer: each serialization scored against gold (``parsing.core.SERIALIZATIONS``) gets columns prefixed with
@@ -32,6 +34,7 @@ from .metrics import CONFUSION_GROUPS, dropped_text_rate, garble_rate, gold_metr
 EVALUATION_DIR = 'evaluation'
 HOLDOUT_SHARE = 0.2  # documents held out of screening (E1-E7) until validation (E8)
 DEFAULT_SERIALIZATIONS = ('body', 'body_tables')
+GARBLED_DOCUMENT = 0.01  # mean page garble rate from which a document's text counts as broken
 _KEYS = ('doc_id', 'page', 'split')
 
 Row = dict[str, object]
@@ -74,6 +77,7 @@ def evaluate_run(
         kept = pages.get(source.hash_id) if pages else None
         numbers = [n for n in parsed.page_numbers if kept is None or n in kept]
         pypdf_seconds = statistics.fmean(pypdf.get(n, math.nan) for n in numbers) if numbers else math.nan
+        first = len(rows)
         for number in numbers:
             output = text['extracted'].get(number, '')
             row: Row = {
@@ -105,6 +109,7 @@ def evaluate_run(
                     scores = gold_metrics(expected, everything, text[name].get(number, ''))
                     row |= {f'{name}.{metric}': value for metric, value in scores.items()}
             rows.append(row)
+        _mark_garbled(rows[first:])
         documents += 1
         parser = _parser_params(parsed.parser.name, parsed.parser.version, parsed.parser.config)
 
@@ -149,6 +154,16 @@ def write_csv(rows: list[Row], path: Path) -> None:
         writer = csv.DictWriter(handle, fieldnames=columns)
         writer.writeheader()
         writer.writerows(rows)
+
+
+def _mark_garbled(rows: Sequence[Row]) -> None:
+    """Flag one document's pages if it is garbled; otherwise copy their garble rate to the clean-documents column."""
+    rates = [rate for row in rows if (rate := as_number(row['extracted.garble_rate'])) is not None]
+    garbled = bool(rates) and statistics.fmean(rates) >= GARBLED_DOCUMENT
+    for row in rows:
+        row['extracted.garbled_doc_pages'] = float(garbled)
+        if not garbled:
+            row['extracted.garble_rate_clean_docs'] = row['extracted.garble_rate']
 
 
 def _gold_text(gold: Mapping[str, Gold], hash_id: str, names: Sequence[str]) -> dict[str, Any] | None:

@@ -31,6 +31,14 @@ metrics:
     description: >-
       Share of words with U+FFFD, (cid:n), private-use or control characters, unexpanded ligatures (ﬁ) or detached
       diacritics, in all output text.
+  extracted.garble_rate_clean_docs:
+    label: Garble rate, clean documents
+    target: A
+    description: Garble rate without the garbled documents (mean page garble rate of 1% or more).
+  extracted.garbled_doc_pages:
+    label: Pages in garbled documents
+    target: A
+    description: Share of pages in documents with a mean page garble rate of 1% or more.
   extracted.dropped_text_rate:
     label: Dropped-text rate
     target: A
@@ -114,7 +122,13 @@ experiments:
     question: Does Docling's pypdfium2 backend garble or drop less text than docling-parse?
     variants:
       pypdfium2: {backend: pypdfium2}
-    metrics: [extracted.garble_rate, extracted.dropped_text_rate, extracted.loss, seconds_per_page]
+    metrics:
+      - extracted.garble_rate
+      - extracted.garble_rate_clean_docs
+      - extracted.garbled_doc_pages
+      - extracted.dropped_text_rate
+      - extracted.loss
+      - seconds_per_page
     winner: null
 
   - id: E2

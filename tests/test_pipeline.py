@@ -53,6 +53,8 @@ def test_pipeline_writes_outputs_and_scores(tmp_path: Path, make_pdf) -> None:
     assert sorted(pages) == ['1', '2', '3']
     assert float(pages['1']['extracted.dropped_text_rate']) == 0.0  # pypdf against its own stored text
     assert float(pages['1']['extracted.garble_rate.text']) == 0.0  # pypdf output is one text item per page
+    assert float(pages['1']['extracted.garbled_doc_pages']) == 0.0
+    assert float(pages['1']['extracted.garble_rate_clean_docs']) == 0.0
     assert float(pages['1']['pypdf_seconds_per_page']) > 0  # the inventory's pypdf time, for comparison
     assert float(pages['1']['body.loss']) == 0.0 and pages['2']['body.loss'] == ''  # page 2 not annotated
     params = json.loads((evaluation / 'params.json').read_text())
