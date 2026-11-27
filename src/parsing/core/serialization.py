@@ -13,6 +13,7 @@ from __future__ import annotations
 from collections import defaultdict
 from dataclasses import dataclass
 
+from docling_core.transforms.serializer.base import SerializationResult
 from docling_core.transforms.serializer.common import CommonParams, DocSerializer
 from docling_core.transforms.serializer.markdown import MarkdownDocSerializer, MarkdownParams
 from docling_core.transforms.serializer.plain_text import PlainTextDocSerializer, PlainTextParams
@@ -38,11 +39,28 @@ class Serialization:
         return '.txt' if issubclass(self.serializer, PlainTextDocSerializer) else '.md'
 
     def pages(self, doc: DoclingDocument) -> dict[int, str]:
-        """The serialized text of each page that has any."""
+        """The serialized text of each page that has any.
+
+        One walk of the document yields its top-level parts, grouped by the page of the items in each. A page
+        touched by a part spanning pages (e.g. a list continued overleaf) is serialized with docling's page filter
+        instead, which splits that part by item; filtering every page that way walks the whole document per page.
+        """
+        serializer = self.serializer(doc=doc, params=self.params)
+        by_page: dict[int, list[SerializationResult]] = defaultdict(list)
+        split: set[int] = set()
+        for part in serializer.get_parts():
+            pages = {span.item.prov[0].page_no if span.item.prov else None for span in part.spans}
+            if len(pages) == 1 and None not in pages:
+                by_page[pages.pop()].append(part)
+            else:
+                split |= pages - {None}  # items without a location are on no page, as under the filter
         texts = {}
         for page in sorted(doc.pages):
-            params = self.params.merge_with_patch({'pages': {page}})
-            text = self.serializer(doc=doc, params=params).serialize().text
+            if page in split:
+                params = self.params.merge_with_patch({'pages': {page}})
+                text = self.serializer(doc=doc, params=params).serialize().text
+            else:
+                text = serializer.serialize_doc(parts=by_page.get(page, [])).text
             if text.strip():
                 texts[page] = text
         return texts
