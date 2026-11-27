@@ -103,6 +103,9 @@ Two compatibility fixes keep docling-eval in the same environment as the parser
   needs no longer has. Only two docling-eval evaluators we never run use them, so `annotation` starts docling-eval
   with those modules stubbed.
 
+`annotation` also starts docling-eval with Docling's OCR switched off. docling-eval's Docling provider turns OCR on
+and has no option for it, but the pre-annotations should match B0, which has OCR off.
+
 ## 2. Build the inventory
 
 The inventory profiles every PDF in the corpus once (pages, text-layer size, images) and runs triage, which marks the
@@ -162,6 +165,18 @@ This runs Docling over the dataset to pre-annotate every page, then writes the C
 - `cvat_description.json`: the label set for the project
 - `cvat_tasks/task_00/`, `task_01/`, ...: up to 20 page images per task
 - `cvat_tasks/task_00_preannotate.xml`, ...: each task's pre-annotations
+
+The pre-annotations use Docling's defaults with OCR off, as B0 does (section 1). They run on the GPU with the most
+free memory. To choose the GPU, pass its number as `nvidia-smi` shows it:
+
+```bash
+uv run python -m annotation prepare --gpu 2
+```
+
+Pre-annotation runs on one GPU only, so passing several numbers does not make it faster.
+
+To prepare again, for example after changing the dataset, first delete `data/annotation/docling_eval/eval_dataset/`
+and `data/annotation/cvat/`. Move any exports in `cvat/cvat_annotations/zips/` somewhere safe before you do.
 
 ### Annotate the screening documents first
 

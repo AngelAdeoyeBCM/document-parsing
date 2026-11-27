@@ -5,6 +5,10 @@ command line starts, but docling-ibm-models 4, which Docling 2.153 requires, no 
 pixel-layout and reading-order evaluators use them, and the annotation workflow (create-gt, create-eval with the
 Docling provider, create-cvat) never runs either, so the missing modules are stubbed: any name imported from them
 fails only when it is used.
+
+docling-eval's Docling provider runs OCR, but the pre-annotations must match B0 (``do_ocr=False``): every sampled
+document has an embedded text layer. docling-eval has no option for it, so OCR is switched off where Docling's PDF
+pipeline is built.
 """
 
 from __future__ import annotations
@@ -12,6 +16,7 @@ from __future__ import annotations
 import importlib.util
 import sys
 import types
+from typing import Any
 
 REMOVED = ('docling_ibm_models.layoutmodel.labels', 'docling_ibm_models.reading_order.reading_order_rb')
 
@@ -37,8 +42,21 @@ def _stub_removed_modules() -> None:
             sys.modules[name] = module
 
 
+def _disable_ocr() -> None:
+    from docling.pipeline.standard_pdf_pipeline import StandardPdfPipeline
+
+    init = StandardPdfPipeline.__init__
+
+    def no_ocr_init(self: StandardPdfPipeline, pipeline_options: Any) -> None:
+        pipeline_options.do_ocr = False
+        init(self, pipeline_options)
+
+    StandardPdfPipeline.__init__ = no_ocr_init  # type: ignore[method-assign]
+
+
 if __name__ == '__main__':
     _stub_removed_modules()
+    _disable_ocr()
     from docling_eval.cli.main import app
 
     sys.argv[0] = 'docling-eval'

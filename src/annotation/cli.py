@@ -45,6 +45,9 @@ def _arguments() -> argparse.ArgumentParser:
     preparing.add_argument(
         'dataset', type=Path, nargs='?', default=DEFAULT_WORKSPACE, help='built by `pipeline dataset`'
     )
+    preparing.add_argument(
+        '--gpu', help='GPU to pre-annotate on, as nvidia-smi numbers it (default: the one with most memory free)'
+    )
     preparing.set_defaults(handler=_prepare)
 
     collecting = commands.add_parser('collect', help='turn the CVAT exports into the ground-truth parquet')
@@ -58,8 +61,11 @@ def _arguments() -> argparse.ArgumentParser:
 
 
 def _prepare(args: argparse.Namespace) -> int:
+    from experiments.device import free_gpus  # experiments imports pipeline, so not at module level
+
     workspace = Workspace(args.dataset)
-    prepare(workspace)
+    gpu = args.gpu or next((str(index) for index in free_gpus(0)), None)  # None if nvidia-smi sees none
+    prepare(workspace, gpu)
     logger.info('CVAT tasks are in %s; see `annotation --help` for the steps in CVAT', workspace.cvat)
     return 0
 

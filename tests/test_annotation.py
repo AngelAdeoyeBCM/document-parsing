@@ -64,7 +64,7 @@ def test_prepare_needs_a_dataset_and_runs_docling_eval_in_order(tmp_path: Path, 
     }
     calls: list[list[str]] = []
 
-    def fake_docling_eval(*args: object) -> None:
+    def fake_docling_eval(*args: object, gpu: str | None = None) -> None:
         calls.append([str(arg) for arg in args])
         for key, directory in outputs.items():
             if key in calls[-1] and not (key == 'PlainFiles' and calls[-1][0] == 'create-eval'):

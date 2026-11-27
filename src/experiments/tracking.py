@@ -15,6 +15,7 @@ from .results import ArmResult
 from .spec import Experiment, Spec
 
 NOTE = 'mlflow.note.content'  # rendered as the description in the MLflow UI
+KIND = ('mlflow.experimentKind', 'custom_model_development')  # open in the UI's run table, not the GenAI view
 
 
 def log_overview(spec: Spec) -> str:
@@ -22,6 +23,7 @@ def log_overview(spec: Spec) -> str:
 
     experiment_id = mlflow.set_experiment(overview_name(spec)).experiment_id
     client = mlflow.MlflowClient()
+    client.set_experiment_tag(experiment_id, *KIND)
     client.set_experiment_tag(experiment_id, 'stage', spec.stage)
     client.set_experiment_tag(experiment_id, NOTE, stage_overview(spec))
     return experiment_id
@@ -61,6 +63,7 @@ def log_experiment(spec: Spec, experiment: Experiment, results: Sequence[ArmResu
             if result.comparison:
                 columns = list(result.comparison[0])
                 mlflow.log_table({c: [row[c] for row in result.comparison] for c in columns}, 'comparison.json')
+    client.set_experiment_tag(experiment_id, *KIND)
     client.set_experiment_tag(experiment_id, 'stage', spec.stage)
     client.set_experiment_tag(experiment_id, 'experiment', experiment.id)
     client.set_experiment_tag(experiment_id, NOTE, experiment_description(spec, experiment, results))
